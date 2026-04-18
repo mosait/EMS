@@ -1,0 +1,1318 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "3d01ee89493ac51017d690bb4a30facd",
+    "entities": [
+      {
+        "tableName": "missions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createdAt` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `status` TEXT NOT NULL, `einsatzDatum` TEXT, `einsatzNummer` TEXT NOT NULL, `einsatzArt` TEXT NOT NULL, `rettungsMittel` TEXT NOT NULL, `fahrzeugKennung` TEXT NOT NULL, `funkKennung` TEXT NOT NULL, `einsatzOrtStrasse` TEXT NOT NULL, `einsatzOrtPlz` TEXT NOT NULL, `einsatzOrtOrt` TEXT NOT NULL, `einsatzOrtZusatz` TEXT NOT NULL, `transportZiel` TEXT NOT NULL, `personalJson` TEXT NOT NULL, `kmAnfang` INTEGER, `kmEnde` INTEGER, `zeitAlarm` TEXT, `zeitAbfahrt` TEXT, `zeitAnkunftEinsatzort` TEXT, `zeitAbfahrtEinsatzort` TEXT, `zeitAnkunftKrankenhaus` TEXT, `zeitFreimeldung` TEXT, `zeitEnde` TEXT, `sondersignalZumEinsatz` INTEGER NOT NULL, `sondersignalPatientenfahrt` INTEGER NOT NULL, `bemerkungen` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "einsatzDatum",
+            "columnName": "einsatzDatum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "einsatzNummer",
+            "columnName": "einsatzNummer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "einsatzArt",
+            "columnName": "einsatzArt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rettungsMittel",
+            "columnName": "rettungsMittel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fahrzeugKennung",
+            "columnName": "fahrzeugKennung",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "funkKennung",
+            "columnName": "funkKennung",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "einsatzOrtStrasse",
+            "columnName": "einsatzOrtStrasse",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "einsatzOrtPlz",
+            "columnName": "einsatzOrtPlz",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "einsatzOrtOrt",
+            "columnName": "einsatzOrtOrt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "einsatzOrtZusatz",
+            "columnName": "einsatzOrtZusatz",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transportZiel",
+            "columnName": "transportZiel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personalJson",
+            "columnName": "personalJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kmAnfang",
+            "columnName": "kmAnfang",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "kmEnde",
+            "columnName": "kmEnde",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "zeitAlarm",
+            "columnName": "zeitAlarm",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "zeitAbfahrt",
+            "columnName": "zeitAbfahrt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "zeitAnkunftEinsatzort",
+            "columnName": "zeitAnkunftEinsatzort",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "zeitAbfahrtEinsatzort",
+            "columnName": "zeitAbfahrtEinsatzort",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "zeitAnkunftKrankenhaus",
+            "columnName": "zeitAnkunftKrankenhaus",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "zeitFreimeldung",
+            "columnName": "zeitFreimeldung",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "zeitEnde",
+            "columnName": "zeitEnde",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sondersignalZumEinsatz",
+            "columnName": "sondersignalZumEinsatz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sondersignalPatientenfahrt",
+            "columnName": "sondersignalPatientenfahrt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bemerkungen",
+            "columnName": "bemerkungen",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "patients",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `missionId` INTEGER NOT NULL, `createdAt` TEXT NOT NULL, `nachname` TEXT NOT NULL, `vorname` TEXT NOT NULL, `geburtsdatum` TEXT, `geschlecht` TEXT NOT NULL, `krankenkasse` TEXT NOT NULL, `versichertenNummer` TEXT NOT NULL, `versichertenStatus` TEXT NOT NULL, `kostentraegerKennung` TEXT NOT NULL, `betriebsstaetteNummer` TEXT NOT NULL, `arztNummer` TEXT NOT NULL, `strasse` TEXT NOT NULL, `plz` TEXT NOT NULL, `ort` TEXT NOT NULL, `telefon` TEXT NOT NULL, FOREIGN KEY(`missionId`) REFERENCES `missions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "missionId",
+            "columnName": "missionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nachname",
+            "columnName": "nachname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vorname",
+            "columnName": "vorname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "geburtsdatum",
+            "columnName": "geburtsdatum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "geschlecht",
+            "columnName": "geschlecht",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "krankenkasse",
+            "columnName": "krankenkasse",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versichertenNummer",
+            "columnName": "versichertenNummer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versichertenStatus",
+            "columnName": "versichertenStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kostentraegerKennung",
+            "columnName": "kostentraegerKennung",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "betriebsstaetteNummer",
+            "columnName": "betriebsstaetteNummer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "arztNummer",
+            "columnName": "arztNummer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "strasse",
+            "columnName": "strasse",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plz",
+            "columnName": "plz",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ort",
+            "columnName": "ort",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "telefon",
+            "columnName": "telefon",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_patients_missionId",
+            "unique": false,
+            "columnNames": [
+              "missionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_patients_missionId` ON `${TABLE_NAME}` (`missionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "missions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "missionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "initial_assessments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `notfallgeschehen` TEXT NOT NULL, `bewusstseinslage` TEXT NOT NULL, `bewusstseinslageText` TEXT NOT NULL, `kreislaufSchock` INTEGER NOT NULL, `kreislaufStillstand` INTEGER NOT NULL, `kreislaufReanimation` INTEGER NOT NULL, `kreislaufSonstigesText` TEXT NOT NULL, `rrSystolisch` INTEGER, `rrDiastolisch` INTEGER, `puls` INTEGER, `spO2` INTEGER, `atemfrequenz` INTEGER, `blutzucker` INTEGER, `temperatur` REAL, `messwertZeit` TEXT, `gcsAugen` INTEGER NOT NULL, `gcsVerbal` INTEGER NOT NULL, `gcsMotorik` INTEGER NOT NULL, `pupilleLinks` TEXT NOT NULL, `pupilleRechts` TEXT NOT NULL, `pupillenLichtreaktionLinks` INTEGER NOT NULL, `pupillenLichtreaktionRechts` INTEGER NOT NULL, `ekg` TEXT NOT NULL, `ekgSonstigesText` TEXT NOT NULL, `schmerzSkala` INTEGER NOT NULL, `atmung` TEXT NOT NULL, `atmungSonstigesText` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notfallgeschehen",
+            "columnName": "notfallgeschehen",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bewusstseinslage",
+            "columnName": "bewusstseinslage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bewusstseinslageText",
+            "columnName": "bewusstseinslageText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kreislaufSchock",
+            "columnName": "kreislaufSchock",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kreislaufStillstand",
+            "columnName": "kreislaufStillstand",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kreislaufReanimation",
+            "columnName": "kreislaufReanimation",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kreislaufSonstigesText",
+            "columnName": "kreislaufSonstigesText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rrSystolisch",
+            "columnName": "rrSystolisch",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "rrDiastolisch",
+            "columnName": "rrDiastolisch",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "puls",
+            "columnName": "puls",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "spO2",
+            "columnName": "spO2",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "atemfrequenz",
+            "columnName": "atemfrequenz",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "blutzucker",
+            "columnName": "blutzucker",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "temperatur",
+            "columnName": "temperatur",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "messwertZeit",
+            "columnName": "messwertZeit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "gcsAugen",
+            "columnName": "gcsAugen",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gcsVerbal",
+            "columnName": "gcsVerbal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gcsMotorik",
+            "columnName": "gcsMotorik",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pupilleLinks",
+            "columnName": "pupilleLinks",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pupilleRechts",
+            "columnName": "pupilleRechts",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pupillenLichtreaktionLinks",
+            "columnName": "pupillenLichtreaktionLinks",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pupillenLichtreaktionRechts",
+            "columnName": "pupillenLichtreaktionRechts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ekg",
+            "columnName": "ekg",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ekgSonstigesText",
+            "columnName": "ekgSonstigesText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schmerzSkala",
+            "columnName": "schmerzSkala",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "atmung",
+            "columnName": "atmung",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "atmungSonstigesText",
+            "columnName": "atmungSonstigesText",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_initial_assessments_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_initial_assessments_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "diagnoses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `keine` INTEGER NOT NULL, `selectedConditionsJson` TEXT NOT NULL, `sonstigesTexteJson` TEXT NOT NULL, `freitext` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "keine",
+            "columnName": "keine",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedConditionsJson",
+            "columnName": "selectedConditionsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sonstigesTexteJson",
+            "columnName": "sonstigesTexteJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "freitext",
+            "columnName": "freitext",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_diagnoses_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_diagnoses_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "injuries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `keine` INTEGER NOT NULL, `injuryTypesJson` TEXT NOT NULL, `bodyRegionsJson` TEXT NOT NULL, `kopfHalsFreitext` TEXT NOT NULL, `freitext` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "keine",
+            "columnName": "keine",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "injuryTypesJson",
+            "columnName": "injuryTypesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bodyRegionsJson",
+            "columnName": "bodyRegionsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kopfHalsFreitext",
+            "columnName": "kopfHalsFreitext",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "freitext",
+            "columnName": "freitext",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_injuries_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_injuries_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "vital_signs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `timestamp` TEXT NOT NULL, `puls` INTEGER, `rrSystolisch` INTEGER, `rrDiastolisch` INTEGER, `spO2` INTEGER, `atemfrequenz` INTEGER, `blutzucker` INTEGER, `temperatur` REAL, `ekg` TEXT, `gcs` INTEGER, `schmerzSkala` INTEGER, `bemerkung` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "puls",
+            "columnName": "puls",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "rrSystolisch",
+            "columnName": "rrSystolisch",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "rrDiastolisch",
+            "columnName": "rrDiastolisch",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "spO2",
+            "columnName": "spO2",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "atemfrequenz",
+            "columnName": "atemfrequenz",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "blutzucker",
+            "columnName": "blutzucker",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "temperatur",
+            "columnName": "temperatur",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "ekg",
+            "columnName": "ekg",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "gcs",
+            "columnName": "gcs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "schmerzSkala",
+            "columnName": "schmerzSkala",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bemerkung",
+            "columnName": "bemerkung",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_vital_signs_patientId",
+            "unique": false,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vital_signs_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "measures",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `selectedMeasuresJson` TEXT NOT NULL, `sauerstoffLiterProMin` REAL, `medikamente` TEXT NOT NULL, `sonstige` TEXT NOT NULL, `sonstigesTexteJson` TEXT NOT NULL, `ersthelferSuffizient` INTEGER NOT NULL, `ersthelferInsuffizient` INTEGER NOT NULL, `ersthelferAed` INTEGER NOT NULL, `ersthelferKeine` INTEGER NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedMeasuresJson",
+            "columnName": "selectedMeasuresJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sauerstoffLiterProMin",
+            "columnName": "sauerstoffLiterProMin",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "medikamente",
+            "columnName": "medikamente",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sonstige",
+            "columnName": "sonstige",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sonstigesTexteJson",
+            "columnName": "sonstigesTexteJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ersthelferSuffizient",
+            "columnName": "ersthelferSuffizient",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ersthelferInsuffizient",
+            "columnName": "ersthelferInsuffizient",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ersthelferAed",
+            "columnName": "ersthelferAed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ersthelferKeine",
+            "columnName": "ersthelferKeine",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_measures_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_measures_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "mission_results",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `zustandVerbessert` INTEGER NOT NULL, `zustandUnveraendert` INTEGER NOT NULL, `zustandVerschlechtert` INTEGER NOT NULL, `transportNichtErforderlich` INTEGER NOT NULL, `patientLehntTransportAb` INTEGER NOT NULL, `notarztNachgefordert` INTEGER NOT NULL, `notarztAbbestellt` INTEGER NOT NULL, `hausarztInformiert` INTEGER NOT NULL, `todAmNotfallort` INTEGER NOT NULL, `todWaehrendTransport` INTEGER NOT NULL, `sonstigesFreitext` TEXT NOT NULL, `nacaScore` INTEGER, `uebergabeAn` TEXT NOT NULL, `uebergabeZeit` TEXT, `wertsachen` TEXT NOT NULL, `verlaufsbeschreibung` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zustandVerbessert",
+            "columnName": "zustandVerbessert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zustandUnveraendert",
+            "columnName": "zustandUnveraendert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zustandVerschlechtert",
+            "columnName": "zustandVerschlechtert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transportNichtErforderlich",
+            "columnName": "transportNichtErforderlich",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientLehntTransportAb",
+            "columnName": "patientLehntTransportAb",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notarztNachgefordert",
+            "columnName": "notarztNachgefordert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notarztAbbestellt",
+            "columnName": "notarztAbbestellt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hausarztInformiert",
+            "columnName": "hausarztInformiert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "todAmNotfallort",
+            "columnName": "todAmNotfallort",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "todWaehrendTransport",
+            "columnName": "todWaehrendTransport",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sonstigesFreitext",
+            "columnName": "sonstigesFreitext",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nacaScore",
+            "columnName": "nacaScore",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "uebergabeAn",
+            "columnName": "uebergabeAn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uebergabeZeit",
+            "columnName": "uebergabeZeit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "wertsachen",
+            "columnName": "wertsachen",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verlaufsbeschreibung",
+            "columnName": "verlaufsbeschreibung",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mission_results_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_mission_results_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "infection_protocols",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `bekannteInfektionenJson` TEXT NOT NULL, `infektionFreitext` TEXT NOT NULL, `schutzHandschuhe` INTEGER NOT NULL, `schutzMundschutz` INTEGER NOT NULL, `schutzSchutzbrille` INTEGER NOT NULL, `schutzSchutzkittel` INTEGER NOT NULL, `schutzFFP2` INTEGER NOT NULL, `schutzSonstiges` TEXT NOT NULL, `expositionStichverletzung` INTEGER NOT NULL, `expositionSchleimhaut` INTEGER NOT NULL, `expositionHautkontakt` INTEGER NOT NULL, `expositionKeine` INTEGER NOT NULL, `fahrzeugDesinfiziert` INTEGER NOT NULL, `geraeteDesinfiziert` INTEGER NOT NULL, `waescheGewechselt` INTEGER NOT NULL, `desinfektionsmittel` TEXT NOT NULL, `desinfektionDurchgefuehrtVon` TEXT NOT NULL, `bemerkungen` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bekannteInfektionenJson",
+            "columnName": "bekannteInfektionenJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "infektionFreitext",
+            "columnName": "infektionFreitext",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schutzHandschuhe",
+            "columnName": "schutzHandschuhe",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schutzMundschutz",
+            "columnName": "schutzMundschutz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schutzSchutzbrille",
+            "columnName": "schutzSchutzbrille",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schutzSchutzkittel",
+            "columnName": "schutzSchutzkittel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schutzFFP2",
+            "columnName": "schutzFFP2",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schutzSonstiges",
+            "columnName": "schutzSonstiges",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expositionStichverletzung",
+            "columnName": "expositionStichverletzung",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expositionSchleimhaut",
+            "columnName": "expositionSchleimhaut",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expositionHautkontakt",
+            "columnName": "expositionHautkontakt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expositionKeine",
+            "columnName": "expositionKeine",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fahrzeugDesinfiziert",
+            "columnName": "fahrzeugDesinfiziert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "geraeteDesinfiziert",
+            "columnName": "geraeteDesinfiziert",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "waescheGewechselt",
+            "columnName": "waescheGewechselt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desinfektionsmittel",
+            "columnName": "desinfektionsmittel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desinfektionDurchgefuehrtVon",
+            "columnName": "desinfektionDurchgefuehrtVon",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bemerkungen",
+            "columnName": "bemerkungen",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_infection_protocols_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_infection_protocols_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "transport_refusals",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `patientName` TEXT NOT NULL, `geburtsdatum` TEXT NOT NULL, `geburtsort` TEXT NOT NULL, `datum` TEXT, `uhrzeit` TEXT NOT NULL, `lehntBehandlungAb` INTEGER NOT NULL, `lehntTransportAb` INTEGER NOT NULL, `nichtAuszuschliessendeErkrankungen` TEXT NOT NULL, `moeglicheFolgen` TEXT NOT NULL, `nameZeugeAngehoeriger` TEXT NOT NULL, `adresseZeugeAngehoeriger` TEXT NOT NULL, `nameZeugeRettungsdienst` TEXT NOT NULL, `nameRettungsdienstNotarzt` TEXT NOT NULL, `ort` TEXT NOT NULL, FOREIGN KEY(`patientId`) REFERENCES `patients`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientName",
+            "columnName": "patientName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "geburtsdatum",
+            "columnName": "geburtsdatum",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "geburtsort",
+            "columnName": "geburtsort",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "datum",
+            "columnName": "datum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uhrzeit",
+            "columnName": "uhrzeit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lehntBehandlungAb",
+            "columnName": "lehntBehandlungAb",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lehntTransportAb",
+            "columnName": "lehntTransportAb",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nichtAuszuschliessendeErkrankungen",
+            "columnName": "nichtAuszuschliessendeErkrankungen",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "moeglicheFolgen",
+            "columnName": "moeglicheFolgen",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameZeugeAngehoeriger",
+            "columnName": "nameZeugeAngehoeriger",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "adresseZeugeAngehoeriger",
+            "columnName": "adresseZeugeAngehoeriger",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameZeugeRettungsdienst",
+            "columnName": "nameZeugeRettungsdienst",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameRettungsdienstNotarzt",
+            "columnName": "nameRettungsdienstNotarzt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ort",
+            "columnName": "ort",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_transport_refusals_patientId",
+            "unique": true,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_transport_refusals_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patients",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3d01ee89493ac51017d690bb4a30facd')"
+    ]
+  }
+}
