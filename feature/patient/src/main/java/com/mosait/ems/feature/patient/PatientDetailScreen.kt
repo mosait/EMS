@@ -129,12 +129,6 @@ fun PatientDetailScreen(
                 onClick = { onNavigateToDiagnosis(patientId) }
             )
             ProtocolSectionButton(
-                title = "Infektionsprotokoll",
-                subtitle = "Infektionen, Schutzmaßnahmen, Desinfektion",
-                icon = Icons.Default.Shield,
-                onClick = { onNavigateToInfectionProtocol(patientId) }
-            )
-            ProtocolSectionButton(
                 title = "Verletzung",
                 subtitle = "Verletzungsart und betroffene Körperregionen",
                 icon = Icons.Default.PersonalInjury,
@@ -157,6 +151,12 @@ fun PatientDetailScreen(
                 subtitle = "Zustand, Transport, Übergabe",
                 icon = Icons.Default.AssignmentTurnedIn,
                 onClick = { onNavigateToResult(patientId) }
+            )
+            ProtocolSectionButton(
+                title = "Infektionsprotokoll",
+                subtitle = "Infektionen, Schutzmaßnahmen, Desinfektion",
+                icon = Icons.Default.Shield,
+                onClick = { onNavigateToInfectionProtocol(patientId) }
             )
             ProtocolSectionButton(
                 title = "Transportverweigerung",

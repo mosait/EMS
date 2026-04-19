@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import com.mosait.ems.core.ui.components.EmsTopAppBar
 fun OverviewScreen(
     onCreateMission: () -> Unit,
     onMissionClick: (Long) -> Unit,
+    onSettingsClick: () -> Unit,
     viewModel: OverviewViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -54,7 +56,17 @@ fun OverviewScreen(
 
     Scaffold(
         topBar = {
-            EmsTopAppBar(title = "Einsätze")
+            EmsTopAppBar(
+                title = "Einsätze",
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Einstellungen"
+                        )
+                    }
+                }
+            )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(

@@ -1,9 +1,7 @@
 package com.mosait.ems.core.model
 
 enum class MissionStatus(val displayName: String) {
-    DRAFT("Entwurf"),
     IN_PROGRESS("Laufend"),
-    COMPLETED("Abgeschlossen"),
     EXPORTED("Exportiert")
 }
 

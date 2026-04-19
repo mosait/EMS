@@ -120,7 +120,35 @@ fun InjuryScreen(
                     onSelectionChanged = { viewModel.updateSelectedRegions(it) },
                     labelSelector = { it.name.replace("_", " ") }
                 )
-                // Always-visible Freitext for Kopf / Hals
+                // Inline severity selection for selected regions in this group
+                val selectedInGroup = regions.filter { it in uiState.selectedRegions }
+                if (selectedInGroup.isNotEmpty()) {
+                    selectedInGroup.forEach { region ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = region.name.replace("_", " "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                InjurySeverity.entries.forEach { severity ->
+                                    FilterChip(
+                                        selected = uiState.regionSeverities[region] == severity,
+                                        onClick = { viewModel.updateSeverityForRegion(region, severity) },
+                                        label = { Text(severity.name, style = MaterialTheme.typography.labelSmall) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                // Freitext for Kopf / Hals after severity
                 if (groupName == "Kopf / Hals") {
                     EmsTextField(
                         value = uiState.kopfHalsFreitext,
@@ -129,32 +157,6 @@ fun InjuryScreen(
                         singleLine = false,
                         maxLines = 3
                     )
-                }
-            }
-
-            if (uiState.selectedRegions.isNotEmpty()) {
-                SectionHeader(title = "Schweregrad pro Region")
-                uiState.selectedRegions.forEach { region ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = region.name.replace("_", " "),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            InjurySeverity.entries.forEach { severity ->
-                                FilterChip(
-                                    selected = uiState.regionSeverities[region] == severity,
-                                    onClick = { viewModel.updateSeverityForRegion(region, severity) },
-                                    label = { Text(severity.name, style = MaterialTheme.typography.labelSmall) }
-                                )
-                            }
-                        }
-                    }
                 }
             }
 

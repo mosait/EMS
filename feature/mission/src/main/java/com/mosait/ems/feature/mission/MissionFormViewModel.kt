@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.mosait.ems.core.data.repository.MissionRepository
 import com.mosait.ems.core.model.EinsatzArt
 import com.mosait.ems.core.model.Mission
+import com.mosait.ems.core.model.MissionStatus
 import com.mosait.ems.core.model.PersonalEntry
 import com.mosait.ems.core.model.PersonalRolle
 import com.mosait.ems.core.model.RettungsMittel
@@ -20,7 +21,9 @@ import javax.inject.Inject
 
 data class MissionFormUiState(
     val einsatzArt: EinsatzArt = EinsatzArt.NOTFALLEINSATZ,
+    val einsatzArtSonstiges: String = "",
     val rettungsMittel: RettungsMittel = RettungsMittel.RTW,
+    val rettungsMittelSonstiges: String = "",
     val einsatzNummer: String = "",
     val funkKennung: String = "",
     val personal: List<PersonalEntry> = emptyList(),
@@ -64,7 +67,9 @@ class MissionFormViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             einsatzArt = mission.einsatzArt,
+                            einsatzArtSonstiges = mission.einsatzArtSonstiges,
                             rettungsMittel = mission.rettungsMittel,
+                            rettungsMittelSonstiges = mission.rettungsMittelSonstiges,
                             einsatzNummer = mission.einsatzNummer,
                             funkKennung = mission.funkKennung,
                             personal = mission.personal,
@@ -77,11 +82,10 @@ class MissionFormViewModel @Inject constructor(
                     }
                 } ?: _uiState.update { it.copy(isLoading = false) }
             } else {
-                // New mission: carry over from latest mission
+                // New mission: carry over from latest mission (except einsatzNummer)
                 missionRepository.getLatestMission()?.let { latest ->
                     _uiState.update {
                         it.copy(
-                            einsatzNummer = latest.einsatzNummer,
                             funkKennung = latest.funkKennung,
                             personal = latest.personal,
                             isLoading = false
@@ -94,7 +98,9 @@ class MissionFormViewModel @Inject constructor(
     }
 
     fun updateEinsatzArt(art: EinsatzArt) = _uiState.update { it.copy(einsatzArt = art) }
+    fun updateEinsatzArtSonstiges(value: String) = _uiState.update { it.copy(einsatzArtSonstiges = value) }
     fun updateRettungsMittel(mittel: RettungsMittel) = _uiState.update { it.copy(rettungsMittel = mittel) }
+    fun updateRettungsMittelSonstiges(value: String) = _uiState.update { it.copy(rettungsMittelSonstiges = value) }
     fun updateEinsatzNummer(value: String) = _uiState.update { it.copy(einsatzNummer = value) }
     fun updateFunkKennung(value: String) = _uiState.update { it.copy(funkKennung = value) }
     fun updateEinsatzOrtStrasse(value: String) = _uiState.update { it.copy(einsatzOrtStrasse = value) }
@@ -120,7 +126,9 @@ class MissionFormViewModel @Inject constructor(
             if (state.isEditMode && existingMission != null) {
                 val updated = existingMission!!.copy(
                     einsatzArt = state.einsatzArt,
+                    einsatzArtSonstiges = state.einsatzArtSonstiges,
                     rettungsMittel = state.rettungsMittel,
+                    rettungsMittelSonstiges = state.rettungsMittelSonstiges,
                     einsatzNummer = state.einsatzNummer,
                     fahrzeugKennung = state.funkKennung,
                     funkKennung = state.funkKennung,
@@ -128,7 +136,8 @@ class MissionFormViewModel @Inject constructor(
                     einsatzOrtStrasse = state.einsatzOrtStrasse,
                     einsatzOrtPlz = state.einsatzOrtPlz,
                     einsatzOrtOrt = state.einsatzOrtOrt,
-                    transportZiel = state.transportZiel
+                    transportZiel = state.transportZiel,
+                    status = MissionStatus.IN_PROGRESS
                 )
                 missionRepository.updateMission(updated)
                 _uiState.update { it.copy(isSaving = false, savedMissionId = updated.id) }
@@ -137,7 +146,9 @@ class MissionFormViewModel @Inject constructor(
                     einsatzDatum = LocalDate.now(),
                     einsatzNummer = state.einsatzNummer,
                     einsatzArt = state.einsatzArt,
+                    einsatzArtSonstiges = state.einsatzArtSonstiges,
                     rettungsMittel = state.rettungsMittel,
+                    rettungsMittelSonstiges = state.rettungsMittelSonstiges,
                     fahrzeugKennung = state.funkKennung,
                     funkKennung = state.funkKennung,
                     personal = state.personal,

@@ -20,6 +20,7 @@ import com.mosait.ems.feature.patient.VitalsScreen
 import com.mosait.ems.feature.patient.MeasuresScreen
 import com.mosait.ems.feature.patient.ResultScreen
 import com.mosait.ems.feature.export.ExportScreen
+import com.mosait.ems.settings.SettingsScreen
 
 @Composable
 fun EmsNavHost() {
@@ -36,6 +37,9 @@ fun EmsNavHost() {
                 },
                 onMissionClick = { missionId ->
                     navController.navigate(Route.MissionDetail(missionId))
+                },
+                onSettingsClick = {
+                    navController.navigate(Route.Settings)
                 }
             )
         }
@@ -218,6 +222,12 @@ fun EmsNavHost() {
             val route = backStackEntry.toRoute<Route.Export>()
             ExportScreen(
                 missionId = route.missionId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<Route.Settings> {
+            SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

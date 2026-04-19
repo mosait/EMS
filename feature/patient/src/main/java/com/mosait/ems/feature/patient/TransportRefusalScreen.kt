@@ -16,6 +16,7 @@ import com.mosait.ems.core.ui.components.SectionHeader
 import com.mosait.ems.core.ui.components.SignaturePad
 import com.mosait.ems.core.ui.components.UnsavedChangesDialog
 import com.mosait.ems.core.ui.util.DateTimeUtil
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -109,7 +110,7 @@ fun TransportRefusalScreen(
                 readOnly = true
             )
             EmsTextField(
-                value = uiState.uhrzeit?.toString() ?: "",
+                value = uiState.uhrzeit?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = { },
                 label = "Uhrzeit",
                 readOnly = true

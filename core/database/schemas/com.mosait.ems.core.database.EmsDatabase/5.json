@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "c040ed4f3af83865a385d3a4dd80320e",
+    "identityHash": "e4513b113855a1d69a292b2301cc6a03",
     "entities": [
       {
         "tableName": "missions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createdAt` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `status` TEXT NOT NULL, `einsatzDatum` TEXT, `einsatzNummer` TEXT NOT NULL, `einsatzArt` TEXT NOT NULL, `rettungsMittel` TEXT NOT NULL, `fahrzeugKennung` TEXT NOT NULL, `funkKennung` TEXT NOT NULL, `einsatzOrtStrasse` TEXT NOT NULL, `einsatzOrtPlz` TEXT NOT NULL, `einsatzOrtOrt` TEXT NOT NULL, `einsatzOrtZusatz` TEXT NOT NULL, `transportZiel` TEXT NOT NULL, `personalJson` TEXT NOT NULL, `kmAnfang` INTEGER, `kmEnde` INTEGER, `zeitAlarm` TEXT, `zeitAbfahrt` TEXT, `zeitAnkunftEinsatzort` TEXT, `zeitAbfahrtEinsatzort` TEXT, `zeitAnkunftKrankenhaus` TEXT, `zeitFreimeldung` TEXT, `zeitEnde` TEXT, `sondersignalZumEinsatz` INTEGER NOT NULL, `sondersignalPatientenfahrt` INTEGER NOT NULL, `bemerkungen` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createdAt` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `status` TEXT NOT NULL, `einsatzDatum` TEXT, `einsatzNummer` TEXT NOT NULL, `einsatzArt` TEXT NOT NULL, `einsatzArtSonstiges` TEXT NOT NULL, `rettungsMittel` TEXT NOT NULL, `rettungsMittelSonstiges` TEXT NOT NULL, `fahrzeugKennung` TEXT NOT NULL, `funkKennung` TEXT NOT NULL, `einsatzOrtStrasse` TEXT NOT NULL, `einsatzOrtPlz` TEXT NOT NULL, `einsatzOrtOrt` TEXT NOT NULL, `einsatzOrtZusatz` TEXT NOT NULL, `transportZiel` TEXT NOT NULL, `personalJson` TEXT NOT NULL, `kmAnfang` INTEGER, `kmEnde` INTEGER, `zeitAlarm` TEXT, `zeitAbfahrt` TEXT, `zeitAnkunftEinsatzort` TEXT, `zeitAbfahrtEinsatzort` TEXT, `zeitAnkunftKrankenhaus` TEXT, `zeitFreimeldung` TEXT, `zeitEnde` TEXT, `sondersignalZumEinsatz` INTEGER NOT NULL, `sondersignalPatientenfahrt` INTEGER NOT NULL, `bemerkungen` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -50,8 +50,20 @@
             "notNull": true
           },
           {
+            "fieldPath": "einsatzArtSonstiges",
+            "columnName": "einsatzArtSonstiges",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "rettungsMittel",
             "columnName": "rettungsMittel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rettungsMittelSonstiges",
+            "columnName": "rettungsMittelSonstiges",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -1317,7 +1329,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c040ed4f3af83865a385d3a4dd80320e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e4513b113855a1d69a292b2301cc6a03')"
     ]
   }
 }

@@ -43,7 +43,5 @@ val Neutral95 = Color(0xFFF1F0F4)
 val Neutral99 = Color(0xFFFDFBFF)
 
 // Status-Farben für die App
-val StatusDraft = Color(0xFF9E9E9E)
-val StatusInProgress = Color(0xFF1B5FA8)
-val StatusCompleted = Color(0xFF2E7D32)
-val StatusExported = Color(0xFF00687A)
+val StatusInProgress = Color(0xFFF9A825)  // Gelb
+val StatusExported = Color(0xFF2E7D32)    // Grün

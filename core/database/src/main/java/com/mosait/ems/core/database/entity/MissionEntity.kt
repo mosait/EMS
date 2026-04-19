@@ -15,8 +15,10 @@ data class MissionEntity(
     val einsatzDatum: LocalDate? = null,
     val einsatzNummer: String = "",
     val einsatzArt: String = "NOTFALLEINSATZ",
+    val einsatzArtSonstiges: String = "",
 
     val rettungsMittel: String = "RTW",
+    val rettungsMittelSonstiges: String = "",
     val fahrzeugKennung: String = "",
     val funkKennung: String = "",
 

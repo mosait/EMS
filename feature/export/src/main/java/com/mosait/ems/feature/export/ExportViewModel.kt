@@ -1,6 +1,7 @@
 package com.mosait.ems.feature.export
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
@@ -11,7 +12,10 @@ import com.mosait.ems.core.ui.util.DateTimeUtil
 import com.mosait.ems.core.data.repository.MissionRepository
 import com.mosait.ems.core.data.repository.PatientRepository
 import com.mosait.ems.core.data.repository.ProtocolRepository
+import com.mosait.ems.core.model.BodyRegion
+import com.mosait.ems.core.model.InjurySeverity
 import com.mosait.ems.core.model.MissionStatus
+import com.mosait.ems.core.model.VitalSign
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,9 +24,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
@@ -95,9 +101,10 @@ class ExportViewModel @Inject constructor(
                 val pageHeight = 842
 
                 val titlePaint = Paint().apply { textSize = 18f; isFakeBoldText = true }
-                val headerPaint = Paint().apply { textSize = 14f; isFakeBoldText = true }
+                val headerPaint = Paint().apply { textSize = 14f; isFakeBoldText = true; color = 0xFF1B5FA8.toInt() }
                 val textPaint = Paint().apply { textSize = 11f }
                 val smallPaint = Paint().apply { textSize = 9f; color = android.graphics.Color.GRAY }
+                val separatorPaint = Paint().apply { color = 0xFFCCCCCC.toInt(); strokeWidth = 1f }
 
                 var pageNumber = 1
                 var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
@@ -124,12 +131,21 @@ class ExportViewModel @Inject constructor(
                     y += lineHeight + extraSpacing
                 }
 
+                fun drawSectionHeader(text: String) {
+                    y += 6f
+                    checkNewPage()
+                    canvas.drawText(text, marginLeft, y, headerPaint)
+                    y += 4f
+                    canvas.drawLine(marginLeft, y, pageWidth - marginLeft, y, separatorPaint)
+                    y += lineHeight
+                }
+
                 // Header
                 drawLine("Einsatzprotokoll", titlePaint, 8f)
                 drawLine("Erstellt: ${DateTimeUtil.formatDate(LocalDate.now())}", smallPaint, 12f)
 
                 // Mission info
-                drawLine("Einsatzdaten", headerPaint, 4f)
+                drawSectionHeader("Einsatzdaten")
                 drawLine("Einsatznummer: ${mission.einsatzNummer.ifBlank { "-" }}")
                 drawLine("Datum: ${DateTimeUtil.formatDate(mission.einsatzDatum)}")
                 drawLine("Art: ${mission.einsatzArt.name.replace("_", " ")}")
@@ -181,7 +197,7 @@ class ExportViewModel @Inject constructor(
 
                 // Each patient
                 for ((index, patient) in patients.withIndex()) {
-                    drawLine("Patient ${index + 1}: ${patient.nachname}, ${patient.vorname}", headerPaint, 4f)
+                    drawSectionHeader("Patient ${index + 1}: ${patient.nachname}, ${patient.vorname}")
                     drawLine("Geb.: ${DateTimeUtil.formatDate(patient.geburtsdatum)}  Geschlecht: ${patient.geschlecht.name}")
                     // Adresse
                     if (patient.strasse.isNotBlank()) {
@@ -202,14 +218,14 @@ class ExportViewModel @Inject constructor(
                     val assessment = protocolRepository.getInitialAssessment(patient.id).first()
                     if (assessment != null && assessment.notfallgeschehen.isNotBlank()) {
                         y += 4f
-                        drawLine("Notfallgeschehen", headerPaint, 2f)
+                        drawSectionHeader("Notfallgeschehen")
                         drawLine(assessment.notfallgeschehen.take(500))
                     }
 
                     // Initial assessment
                     if (assessment != null) {
                         y += 4f
-                        drawLine("Erstbefund", headerPaint, 2f)
+                        drawSectionHeader("Erstbefund")
                         drawLine("Bewusstsein: ${assessment.bewusstseinslage.name}")
                         if (assessment.bewusstseinslageText.isNotBlank()) {
                             drawLine("  ${assessment.bewusstseinslageText}")
@@ -252,7 +268,7 @@ class ExportViewModel @Inject constructor(
                     val diagnosis = protocolRepository.getDiagnosis(patient.id).first()
                     if (diagnosis != null && !diagnosis.keine && (diagnosis.selectedConditions.isNotEmpty() || diagnosis.freitext.isNotBlank())) {
                         y += 4f
-                        drawLine("Erkrankung", headerPaint, 2f)
+                        drawSectionHeader("Erkrankung")
                         if (diagnosis.selectedConditions.isNotEmpty()) {
                             drawLine(diagnosis.selectedConditions.joinToString(", "))
                         }
@@ -268,40 +284,143 @@ class ExportViewModel @Inject constructor(
                     val injury = protocolRepository.getInjury(patient.id).first()
                     if (injury != null && !injury.keine && (injury.injuryTypes.isNotEmpty() || injury.bodyRegions.isNotEmpty() || injury.freitext.isNotBlank())) {
                         y += 4f
-                        drawLine("Verletzung", headerPaint, 2f)
-                        if (injury.injuryTypes.isNotEmpty()) {
-                            drawLine("Art: ${injury.injuryTypes.joinToString(", ") { it.name }}")
-                        }
+                        drawSectionHeader("Verletzung")
+
+                        // If we have body regions, render text on the left and silhouette on the right
                         if (injury.bodyRegions.isNotEmpty()) {
-                            drawLine("Regionen: ${injury.bodyRegions.joinToString(", ") { "${it.region.name} (${it.severity.name})" }}")
-                        }
-                        if (injury.kopfHalsFreitext.isNotBlank()) {
-                            drawLine("Kopf/Hals: ${injury.kopfHalsFreitext}")
-                        }
-                        if (injury.freitext.isNotBlank()) {
-                            drawLine("Freitext: ${injury.freitext}")
+                            val regionSeverities = injury.bodyRegions.associate { it.region to it.severity }
+                            val silBitmap = renderBodySilhouetteBitmap(regionSeverities)
+                            val silWidth = 150f
+                            val silHeight = silWidth * silBitmap.height / silBitmap.width
+
+                            // Check if silhouette fits on current page
+                            if (y + silHeight > pageHeight - 60) {
+                                document.finishPage(page)
+                                pageNumber++
+                                pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+                                page = document.startPage(pageInfo)
+                                canvas = page.canvas
+                                y = 40f
+                            }
+
+                            // Draw silhouette on the right
+                            val silX = pageWidth - marginLeft - silWidth
+                            val silStartY = y
+                            val srcRect = android.graphics.Rect(0, 0, silBitmap.width, silBitmap.height)
+                            val dstRect = android.graphics.RectF(silX, silStartY, silX + silWidth, silStartY + silHeight)
+                            canvas.drawBitmap(silBitmap, srcRect, dstRect, null)
+                            silBitmap.recycle()
+
+                            // Draw text on the left (limited width so it doesn't overlap)
+                            val textStartY = y
+                            if (injury.injuryTypes.isNotEmpty()) {
+                                drawLine("Art: ${injury.injuryTypes.joinToString(", ") { it.name.replace("_", " ") }}")
+                            }
+                            drawLine("Betroffene Regionen:")
+                            injury.bodyRegions.forEach { entry ->
+                                drawLine("  • ${entry.region.name.replace("_", " ")} — ${entry.severity.name}")
+                            }
+                            if (injury.kopfHalsFreitext.isNotBlank()) {
+                                drawLine("Kopf/Hals: ${injury.kopfHalsFreitext}")
+                            }
+                            if (injury.freitext.isNotBlank()) {
+                                drawLine("Freitext: ${injury.freitext}")
+                            }
+
+                            // Ensure y is at least past the silhouette
+                            y = maxOf(y, silStartY + silHeight + 8f)
+                        } else {
+                            // No body regions, just text
+                            if (injury.injuryTypes.isNotEmpty()) {
+                                drawLine("Art: ${injury.injuryTypes.joinToString(", ") { it.name.replace("_", " ") }}")
+                            }
+                            if (injury.kopfHalsFreitext.isNotBlank()) {
+                                drawLine("Kopf/Hals: ${injury.kopfHalsFreitext}")
+                            }
+                            if (injury.freitext.isNotBlank()) {
+                                drawLine("Freitext: ${injury.freitext}")
+                            }
                         }
                     }
 
-                    // Vital signs timeline
+                    // Vital signs table
                     val vitalSigns = protocolRepository.getVitalSigns(patient.id).first()
                     if (vitalSigns.isNotEmpty()) {
                         y += 4f
-                        drawLine("Vitalwerte-Verlauf", headerPaint, 2f)
+                        drawSectionHeader("Vitalwerte-Verlauf")
+
+                        // Table layout
+                        val tablePaint = Paint().apply { textSize = 9f }
+                        val tableBoldPaint = Paint().apply { textSize = 9f; isFakeBoldText = true }
+                        val tableLinePaint = Paint().apply {
+                            color = android.graphics.Color.LTGRAY
+                            strokeWidth = 1f
+                            style = Paint.Style.STROKE
+                        }
+
+                        val labelColWidth = 90f
+                        val valueColWidth = 65f
+                        val rowHeight = 14f
+                        val tableWidth = labelColWidth + valueColWidth * vitalSigns.size
+                        val tableLeft = marginLeft
+
+                        // Check if table fits, otherwise new page
+                        val labels = listOf("Zeit", "RR (mmHg)", "Puls (/min)", "SpO₂ (%)", "AF (/min)", "BZ (mg/dl)", "Temp. (°C)", "GCS", "NRS", "EKG")
+                        val totalTableHeight = labels.size * rowHeight + 4f
+                        if (y + totalTableHeight > pageHeight - 60) {
+                            document.finishPage(page)
+                            pageNumber++
+                            pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+                            page = document.startPage(pageInfo)
+                            canvas = page.canvas
+                            y = 40f
+                        }
+
+                        val tableTop = y
+
+                        // Draw header row
+                        for ((rowIdx, label) in labels.withIndex()) {
+                            val rowY = tableTop + rowIdx * rowHeight
+                            // Label
+                            canvas.drawText(label, tableLeft + 2f, rowY + rowHeight - 3f, if (rowIdx == 0) tableBoldPaint else tablePaint)
+                            // Values
+                            for ((colIdx, vital) in vitalSigns.withIndex()) {
+                                val colX = tableLeft + labelColWidth + colIdx * valueColWidth
+                                val text = when (rowIdx) {
+                                    0 -> DateTimeUtil.formatTime(vital.timestamp)
+                                    1 -> vital.rrSystolisch?.let { sys -> "$sys${vital.rrDiastolisch?.let { "/$it" } ?: ""}" } ?: ""
+                                    2 -> vital.puls?.toString() ?: ""
+                                    3 -> vital.spO2?.toString() ?: ""
+                                    4 -> vital.atemfrequenz?.toString() ?: ""
+                                    5 -> vital.blutzucker?.toString() ?: ""
+                                    6 -> vital.temperatur?.toString() ?: ""
+                                    7 -> vital.gcs?.toString() ?: ""
+                                    8 -> vital.schmerzSkala?.toString() ?: ""
+                                    9 -> vital.ekg?.name?.replace("_", " ") ?: ""
+                                    else -> ""
+                                }
+                                canvas.drawText(text, colX + 2f, rowY + rowHeight - 3f, if (rowIdx == 0) tableBoldPaint else tablePaint)
+                            }
+                            // Horizontal line
+                            canvas.drawLine(tableLeft, rowY + rowHeight, tableLeft + labelColWidth + vitalSigns.size * valueColWidth, rowY + rowHeight, tableLinePaint)
+                        }
+
+                        // Vertical lines
+                        canvas.drawLine(tableLeft, tableTop, tableLeft, tableTop + labels.size * rowHeight, tableLinePaint)
+                        canvas.drawLine(tableLeft + labelColWidth, tableTop, tableLeft + labelColWidth, tableTop + labels.size * rowHeight, tableLinePaint)
+                        for (colIdx in 1..vitalSigns.size) {
+                            val colX = tableLeft + labelColWidth + colIdx * valueColWidth
+                            canvas.drawLine(colX, tableTop, colX, tableTop + labels.size * rowHeight, tableLinePaint)
+                        }
+                        // Top border
+                        canvas.drawLine(tableLeft, tableTop, tableLeft + labelColWidth + vitalSigns.size * valueColWidth, tableTop, tableLinePaint)
+
+                        y = tableTop + labels.size * rowHeight + 8f
+
+                        // Bemerkungen below table
                         for (vital in vitalSigns) {
-                            val values = listOfNotNull(
-                                vital.rrSystolisch?.let { sys -> "RR:$sys${vital.rrDiastolisch?.let { "/$it" } ?: ""}" },
-                                vital.puls?.let { "P:$it" },
-                                vital.spO2?.let { "SpO2:$it%" },
-                                vital.atemfrequenz?.let { "AF:$it" },
-                                vital.blutzucker?.let { "BZ:$it" },
-                                vital.gcs?.let { "GCS:$it" },
-                                vital.schmerzSkala?.let { "NRS:$it" }
-                            ).joinToString("  ")
-                            val time = DateTimeUtil.formatTime(vital.timestamp)
-                            drawLine("$time: $values")
                             if (vital.bemerkung.isNotBlank()) {
-                                drawLine("  ${vital.bemerkung}", smallPaint)
+                                drawLine("${DateTimeUtil.formatTime(vital.timestamp)}: ${vital.bemerkung}", smallPaint)
                             }
                         }
                     }
@@ -312,7 +431,7 @@ class ExportViewModel @Inject constructor(
                         val hasMeasures = measures.selectedMeasures.isNotEmpty() || measures.medikamente.isNotBlank() || measures.sonstige.isNotBlank()
                         if (hasMeasures) {
                             y += 4f
-                            drawLine("Maßnahmen", headerPaint, 2f)
+                            drawSectionHeader("Maßnahmen")
                             if (measures.selectedMeasures.isNotEmpty()) {
                                 drawLine(measures.selectedMeasures.joinToString(", "))
                             }
@@ -339,7 +458,7 @@ class ExportViewModel @Inject constructor(
                     val result = protocolRepository.getMissionResult(patient.id).first()
                     if (result != null) {
                         y += 4f
-                        drawLine("Ergebnis / Übergabe", headerPaint, 2f)
+                        drawSectionHeader("Ergebnis / Übergabe")
                         val zustand = listOfNotNull(
                             if (result.zustandVerbessert) "verbessert" else null,
                             if (result.zustandUnveraendert) "unverändert" else null,
@@ -380,7 +499,7 @@ class ExportViewModel @Inject constructor(
                             !infection.expositionKeine
                         if (hasInfectionData) {
                             y += 4f
-                            drawLine("Infektionsprotokoll", headerPaint, 2f)
+                            drawSectionHeader("Infektionsprotokoll")
                             if (infection.bekannteInfektionen.isNotEmpty()) {
                                 drawLine("Infektionen: ${infection.bekannteInfektionen.joinToString(", ")}")
                             }
@@ -431,7 +550,7 @@ class ExportViewModel @Inject constructor(
                         drawLine("Geb. am: ${refusal.geburtsdatum}    Geb. in: ${refusal.geburtsort}", textPaint, 6f)
 
                         val datumStr = DateTimeUtil.formatDate(refusal.datum)
-                        val uhrzeitStr = refusal.uhrzeit?.toString() ?: ""
+                        val uhrzeitStr = refusal.uhrzeit?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""
                         drawLine("Hiermit erkläre ich, dass ich heute, am $datumStr um $uhrzeitStr", textPaint, 2f)
                         drawLine("vom Rettungsdienst / Notarztdienst über meine Erkrankung bzw. Verletzung", textPaint, 2f)
                         drawLine("und deren Konsequenzen aufgeklärt worden bin und", textPaint, 4f)
@@ -670,36 +789,97 @@ class ExportViewModel @Inject constructor(
                     val injury = protocolRepository.getInjury(patient.id).first()
                     if (injury != null && !injury.keine && (injury.injuryTypes.isNotEmpty() || injury.bodyRegions.isNotEmpty() || injury.freitext.isNotBlank())) {
                         addParagraph("Verletzung", bold = true, fontSize = 24)
+
+                        // Build text content for injury
+                        val injuryTextXml = StringBuilder()
+                        fun addInjuryParagraph(text: String) {
+                            injuryTextXml.append("""<w:p><w:pPr><w:spacing w:after="100"/></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p>""")
+                        }
+
                         if (injury.injuryTypes.isNotEmpty()) {
-                            addParagraph("Art: ${injury.injuryTypes.joinToString(", ") { it.name }}")
+                            addInjuryParagraph("Art: ${injury.injuryTypes.joinToString(", ") { it.name.replace("_", " ") }}")
                         }
                         if (injury.bodyRegions.isNotEmpty()) {
-                            addParagraph("Regionen: ${injury.bodyRegions.joinToString(", ") { "${it.region.name} (${it.severity.name})" }}")
+                            addInjuryParagraph("Betroffene Regionen:")
+                            injury.bodyRegions.forEach { entry ->
+                                addInjuryParagraph("  • ${entry.region.name.replace("_", " ")} — ${entry.severity.name}")
+                            }
                         }
                         if (injury.kopfHalsFreitext.isNotBlank()) {
-                            addParagraph("Kopf/Hals: ${injury.kopfHalsFreitext}")
+                            addInjuryParagraph("Kopf/Hals: ${injury.kopfHalsFreitext}")
                         }
                         if (injury.freitext.isNotBlank()) {
-                            addParagraph("Freitext: ${injury.freitext}")
+                            addInjuryParagraph("Freitext: ${injury.freitext}")
+                        }
+
+                        // Body silhouette as embedded image in right column
+                        if (injury.bodyRegions.isNotEmpty()) {
+                            val regionSeverities = injury.bodyRegions.associate { it.region to it.severity }
+                            val silBitmap = renderBodySilhouetteBitmap(regionSeverities)
+                            val baos = ByteArrayOutputStream()
+                            silBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
+                            val silBytes = baos.toByteArray()
+                            silBitmap.recycle()
+
+                            val imgName = "body_silhouette_${patient.id}.png"
+                            val rId = "rIdBody${docxImages.size + 1}"
+                            docxImages.add(Pair("$rId|$imgName", silBytes))
+                            val imgWidthEmu = 2000000L
+                            val imgHeightEmu = imgWidthEmu * 450 / 250
+
+                            // 2-column table: text left, body silhouette right
+                            bodyXml.append("""<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/></w:tblBorders></w:tblPr><w:tr>""")
+                            // Left cell: text
+                            bodyXml.append("""<w:tc><w:tcPr><w:tcW w:w="6000" w:type="dxa"/></w:tcPr>$injuryTextXml</w:tc>""")
+                            // Right cell: image
+                            bodyXml.append("""<w:tc><w:tcPr><w:tcW w:w="4000" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><wp:extent cx="$imgWidthEmu" cy="$imgHeightEmu"/><wp:docPr id="${docxImages.size + 100}" name="BodySilhouette"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="$imgName"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="$rId" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="$imgWidthEmu" cy="$imgHeightEmu"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:tc>""")
+                            bodyXml.append("</w:tr></w:tbl>")
+                        } else {
+                            // No body regions, just append the text paragraphs directly
+                            bodyXml.append(injuryTextXml)
                         }
                     }
 
                     val vitalSigns = protocolRepository.getVitalSigns(patient.id).first()
                     if (vitalSigns.isNotEmpty()) {
                         addParagraph("Vitalwerte-Verlauf", bold = true, fontSize = 24)
+
+                        // Build OOXML table
+                        val vitalLabels = listOf("Zeit", "RR (mmHg)", "Puls (/min)", "SpO₂ (%)", "AF (/min)", "BZ (mg/dl)", "Temp. (°C)", "GCS", "NRS", "EKG")
+                        bodyXml.append("""<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/></w:tblBorders></w:tblPr>""")
+
+                        for ((rowIdx, label) in vitalLabels.withIndex()) {
+                            bodyXml.append("<w:tr>")
+                            // Label cell (bold, shaded for header)
+                            val cellShading = if (rowIdx == 0) """<w:shd w:val="clear" w:color="auto" w:fill="E8E8E8"/>""" else ""
+                            bodyXml.append("""<w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/>$cellShading</w:tcPr><w:p><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">${escapeXml(label)}</w:t></w:r></w:p></w:tc>""")
+                            // Value cells
+                            for (vital in vitalSigns) {
+                                val text = when (rowIdx) {
+                                    0 -> DateTimeUtil.formatTime(vital.timestamp)
+                                    1 -> vital.rrSystolisch?.let { sys -> "$sys${vital.rrDiastolisch?.let { "/$it" } ?: ""}" } ?: "-"
+                                    2 -> vital.puls?.toString() ?: "-"
+                                    3 -> vital.spO2?.toString() ?: "-"
+                                    4 -> vital.atemfrequenz?.toString() ?: "-"
+                                    5 -> vital.blutzucker?.toString() ?: "-"
+                                    6 -> vital.temperatur?.toString() ?: "-"
+                                    7 -> vital.gcs?.toString() ?: "-"
+                                    8 -> vital.schmerzSkala?.toString() ?: "-"
+                                    9 -> vital.ekg?.name?.replace("_", " ") ?: "-"
+                                    else -> ""
+                                }
+                                val valShading = if (rowIdx == 0) """<w:shd w:val="clear" w:color="auto" w:fill="E8E8E8"/>""" else ""
+                                val valBold = if (rowIdx == 0) "<w:b/>" else ""
+                                bodyXml.append("""<w:tc><w:tcPr><w:tcW w:w="1200" w:type="dxa"/>$valShading</w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr>$valBold<w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p></w:tc>""")
+                            }
+                            bodyXml.append("</w:tr>")
+                        }
+                        bodyXml.append("</w:tbl>")
+
+                        // Bemerkungen
                         for (vital in vitalSigns) {
-                            val values = listOfNotNull(
-                                vital.rrSystolisch?.let { sys -> "RR:$sys${vital.rrDiastolisch?.let { "/$it" } ?: ""}" },
-                                vital.puls?.let { "P:$it" },
-                                vital.spO2?.let { "SpO2:$it%" },
-                                vital.atemfrequenz?.let { "AF:$it" },
-                                vital.blutzucker?.let { "BZ:$it" },
-                                vital.gcs?.let { "GCS:$it" },
-                                vital.schmerzSkala?.let { "NRS:$it" }
-                            ).joinToString("  ")
-                            addParagraph("${DateTimeUtil.formatTime(vital.timestamp)}: $values")
                             if (vital.bemerkung.isNotBlank()) {
-                                addParagraph("  ${vital.bemerkung}", fontSize = 18)
+                                addParagraph("${DateTimeUtil.formatTime(vital.timestamp)}: ${vital.bemerkung}", fontSize = 18)
                             }
                         }
                     }
@@ -815,7 +995,7 @@ class ExportViewModel @Inject constructor(
                         addParagraph("")
 
                         val docxDatumStr = DateTimeUtil.formatDate(docxRefusal.datum)
-                        val docxUhrzeitStr = docxRefusal.uhrzeit?.toString() ?: ""
+                        val docxUhrzeitStr = docxRefusal.uhrzeit?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: ""
                         addParagraph("Hiermit erkläre ich, dass ich heute, am $docxDatumStr um $docxUhrzeitStr vom Rettungsdienst / Notarztdienst über meine Erkrankung bzw. Verletzung und deren Konsequenzen aufgeklärt worden bin und")
 
                         val docxVerweigerung = listOfNotNull(
@@ -903,6 +1083,123 @@ class ExportViewModel @Inject constructor(
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("'", "&apos;")
+    }
+
+    private fun severityColorInt(severity: InjurySeverity): Int = when (severity) {
+        InjurySeverity.LEICHT -> 0x8066BB6A.toInt()
+        InjurySeverity.MITTEL -> 0x80FFA726.toInt()
+        InjurySeverity.SCHWER -> 0x80EF5350.toInt()
+    }
+
+    private fun renderBodySilhouetteBitmap(regionSeverities: Map<BodyRegion, InjurySeverity>): Bitmap {
+        val bmpW = 250
+        val bmpH = 450
+        val bitmap = Bitmap.createBitmap(bmpW, bmpH, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        canvas.drawColor(android.graphics.Color.WHITE)
+
+        val w = bmpW.toFloat()
+        val h = bmpH.toFloat()
+        val outlineColor = 0xFF9E9E9E.toInt()
+
+        val outlinePaint = Paint().apply { color = outlineColor; style = Paint.Style.STROKE; strokeWidth = 2f; isAntiAlias = true }
+        val fillPaint = Paint().apply { style = Paint.Style.FILL; isAntiAlias = true }
+        val textPaint = Paint().apply { textSize = 9f; color = android.graphics.Color.DKGRAY; isAntiAlias = true; textAlign = Paint.Align.CENTER }
+
+        fun drawRegion(region: BodyRegion, left: Float, top: Float, rw: Float, rh: Float) {
+            regionSeverities[region]?.let {
+                fillPaint.color = severityColorInt(it)
+                canvas.drawRect(left, top, left + rw, top + rh, fillPaint)
+            }
+            canvas.drawRect(left, top, left + rw, top + rh, outlinePaint)
+        }
+
+        // Head
+        val headCx = w * 0.5f; val headCy = h * 0.06f; val headR = w * 0.09f
+        regionSeverities[BodyRegion.KOPF]?.let {
+            fillPaint.color = severityColorInt(it)
+            canvas.drawCircle(headCx, headCy, headR, fillPaint)
+        }
+        canvas.drawCircle(headCx, headCy, headR, outlinePaint)
+
+        // Face
+        regionSeverities[BodyRegion.GESICHT]?.let {
+            fillPaint.color = severityColorInt(it)
+            canvas.drawOval(android.graphics.RectF(headCx - headR * 0.5f, headCy - headR * 0.4f, headCx + headR * 0.5f, headCy + headR * 0.4f), fillPaint)
+        }
+
+        // Neck
+        val neckTop = headCy + headR; val neckH = h * 0.03f
+        drawRegion(BodyRegion.HALS, w * 0.44f, neckTop, w * 0.12f, neckH)
+
+        // Torso
+        val torsoTop = neckTop + neckH; val torsoW = w * 0.36f; val torsoLeft = w * 0.5f - torsoW * 0.5f
+        val brustH = h * 0.12f
+        drawRegion(BodyRegion.BRUST, torsoLeft, torsoTop, torsoW, brustH)
+        val bauchTop = torsoTop + brustH; val bauchH = h * 0.10f
+        drawRegion(BodyRegion.BAUCH, torsoLeft, bauchTop, torsoW, bauchH)
+        val beckenTop = bauchTop + bauchH; val beckenH = h * 0.06f
+        drawRegion(BodyRegion.BECKEN, torsoLeft, beckenTop, torsoW, beckenH)
+
+        // Spine
+        val wsX = w * 0.5f
+        val spinePaint = Paint().apply { strokeWidth = 6f; isAntiAlias = true }
+        regionSeverities[BodyRegion.WIRBELSAEULE]?.let {
+            spinePaint.color = severityColorInt(it)
+            canvas.drawLine(wsX, torsoTop, wsX, beckenTop, spinePaint)
+        } ?: run {
+            spinePaint.color = (outlineColor and 0x4DFFFFFF.toInt())
+            canvas.drawLine(wsX, torsoTop, wsX, beckenTop, spinePaint)
+        }
+
+        // Arms
+        val armW = w * 0.08f; val upperArmH = h * 0.12f; val forearmH = h * 0.11f; val handH = h * 0.05f
+        val armRX = torsoLeft - armW - w * 0.02f
+        drawRegion(BodyRegion.OBERARM_RECHTS, armRX, torsoTop, armW, upperArmH)
+        drawRegion(BodyRegion.UNTERARM_RECHTS, armRX, torsoTop + upperArmH, armW, forearmH)
+        drawRegion(BodyRegion.HAND_RECHTS, armRX, torsoTop + upperArmH + forearmH, armW, handH)
+        val armLX = torsoLeft + torsoW + w * 0.02f
+        drawRegion(BodyRegion.OBERARM_LINKS, armLX, torsoTop, armW, upperArmH)
+        drawRegion(BodyRegion.UNTERARM_LINKS, armLX, torsoTop + upperArmH, armW, forearmH)
+        drawRegion(BodyRegion.HAND_LINKS, armLX, torsoTop + upperArmH + forearmH, armW, handH)
+
+        // Back
+        val rueckenW = w * 0.07f; val rueckenLeft = armLX + armW + w * 0.02f
+        drawRegion(BodyRegion.RUECKEN, rueckenLeft, torsoTop, rueckenW, brustH + bauchH)
+
+        // Legs
+        val legW = w * 0.12f; val legGap = w * 0.04f; val legTop = beckenTop + beckenH
+        val thighH = h * 0.14f; val shinH = h * 0.14f; val footH = h * 0.04f
+        val legRX = w * 0.5f - legGap * 0.5f - legW
+        drawRegion(BodyRegion.OBERSCHENKEL_RECHTS, legRX, legTop, legW, thighH)
+        drawRegion(BodyRegion.UNTERSCHENKEL_RECHTS, legRX, legTop + thighH, legW, shinH)
+        drawRegion(BodyRegion.FUSS_RECHTS, legRX, legTop + thighH + shinH, legW, footH)
+        val legLX = w * 0.5f + legGap * 0.5f
+        drawRegion(BodyRegion.OBERSCHENKEL_LINKS, legLX, legTop, legW, thighH)
+        drawRegion(BodyRegion.UNTERSCHENKEL_LINKS, legLX, legTop + thighH, legW, shinH)
+        drawRegion(BodyRegion.FUSS_LINKS, legLX, legTop + thighH + shinH, legW, footH)
+
+        // Labels
+        canvas.drawText("R", armRX + armW / 2, torsoTop - 4f, textPaint)
+        canvas.drawText("L", armLX + armW / 2, torsoTop - 4f, textPaint)
+
+        // Legend at bottom
+        val legendY = legTop + thighH + shinH + footH + 20f
+        val legendPaint = Paint().apply { textSize = 10f; color = android.graphics.Color.BLACK; isAntiAlias = true }
+        val severities = listOf(
+            Triple("Leicht", 0x8066BB6A.toInt(), 0f),
+            Triple("Mittel", 0x80FFA726.toInt(), 80f),
+            Triple("Schwer", 0x80EF5350.toInt(), 160f)
+        )
+        for ((label, color, offset) in severities) {
+            val lx = 25f + offset
+            fillPaint.color = color
+            canvas.drawRect(lx, legendY, lx + 14f, legendY + 14f, fillPaint)
+            canvas.drawRect(lx, legendY, lx + 14f, legendY + 14f, outlinePaint)
+            canvas.drawText(label, lx + 7f, legendY + 28f, textPaint)
+        }
+
+        return bitmap
     }
 
     private fun writeDocxFile(file: File, bodyContent: String, images: List<Pair<String, ByteArray>> = emptyList()) {

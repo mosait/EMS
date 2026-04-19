@@ -3,9 +3,11 @@ package com.mosait.ems.core.data.di
 import com.mosait.ems.core.data.repository.MissionRepository
 import com.mosait.ems.core.data.repository.PatientRepository
 import com.mosait.ems.core.data.repository.ProtocolRepository
+import com.mosait.ems.core.data.repository.SettingsRepository
 import com.mosait.ems.core.data.repository.impl.MissionRepositoryImpl
 import com.mosait.ems.core.data.repository.impl.PatientRepositoryImpl
 import com.mosait.ems.core.data.repository.impl.ProtocolRepositoryImpl
+import com.mosait.ems.core.data.repository.impl.SettingsRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -23,4 +25,7 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindProtocolRepository(impl: ProtocolRepositoryImpl): ProtocolRepository
+
+    @Binds
+    abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
 }

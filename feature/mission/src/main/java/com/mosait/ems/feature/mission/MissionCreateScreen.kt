@@ -1,16 +1,20 @@
 package com.mosait.ems.feature.mission
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -86,6 +90,13 @@ fun MissionCreateScreen(
                 labelSelector = { it.name.replace("_", " ") },
                 singleSelection = true
             )
+            if (uiState.einsatzArt == EinsatzArt.SONSTIGES) {
+                EmsTextField(
+                    value = uiState.einsatzArtSonstiges,
+                    onValueChange = { viewModel.updateEinsatzArtSonstiges(it) },
+                    label = "Einsatzart (Freitext)"
+                )
+            }
 
             SectionHeader(title = "Rettungsmittel")
             EmsChipGroup(
@@ -95,6 +106,13 @@ fun MissionCreateScreen(
                 labelSelector = { it.name },
                 singleSelection = true
             )
+            if (uiState.rettungsMittel == RettungsMittel.SONSTIGES) {
+                EmsTextField(
+                    value = uiState.rettungsMittelSonstiges,
+                    onValueChange = { viewModel.updateRettungsMittelSonstiges(it) },
+                    label = "Rettungsmittel (Freitext)"
+                )
+            }
 
             SectionHeader(title = "Einsatzdaten")
             EmsTextField(
@@ -219,11 +237,106 @@ fun MissionCreateScreen(
             }
 
             SectionHeader(title = "Transportziel")
-            EmsTextField(
-                value = uiState.transportZiel,
-                onValueChange = { viewModel.updateTransportZiel(it) },
-                label = "Krankenhaus / Ziel"
+
+            // Hospital autocomplete free text field
+            val hospitalSuggestions = listOf(
+                // Rems-Murr-Kreis
+                "Rems-Murr-Klinikum Winnenden",
+                "Rems-Murr-Klinik Schorndorf",
+                "Klinik Erbach (Privatambulanz)",
+                // Stuttgart
+                "Klinikum Stuttgart – Katharinenhospital",
+                "Klinikum Stuttgart – Bürgerhospital",
+                "Klinikum Stuttgart – Olgahospital / Frauenklinik",
+                "Robert-Bosch-Krankenhaus",
+                "Robert-Bosch-Krankenhaus Standort 2 (City)",
+                "Diakonie-Klinikum Stuttgart",
+                "Marienhospital Stuttgart",
+                "Karl-Olga-Krankenhaus",
+                "Krankenhaus Bad Cannstatt (KBC)",
+                "Bethesda Krankenhaus Stuttgart",
+                "Evangelisches Krankenhaus Bad Cannstatt",
+                "Klinik Schillerhöhe (Robert Bosch)",
+                "St. Anna Klinik",
+                "Sana Klinik Stuttgart",
+                "Filderklinik",
+                "Kreiskliniken Esslingen – Standort Esslingen",
+                "Kreiskliniken Esslingen – Standort Nürtingen",
+                "Kreiskliniken Esslingen – Standort Kirchheim",
+                "Klinikum Ludwigsburg",
+                "Klinik Bietigheim",
             )
+            val filteredSuggestions = remember(uiState.transportZiel) {
+                if (uiState.transportZiel.length >= 2) {
+                    hospitalSuggestions.filter {
+                        it.contains(uiState.transportZiel, ignoreCase = true)
+                    }
+                } else emptyList()
+            }
+            var showSuggestions by remember { mutableStateOf(true) }
+
+            val navContext = LocalContext.current
+
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    EmsTextField(
+                        value = uiState.transportZiel,
+                        onValueChange = {
+                            viewModel.updateTransportZiel(it)
+                            showSuggestions = true
+                        },
+                        label = "Krankenhaus / Ziel",
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (uiState.transportZiel.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("geo:0,0?q=${Uri.encode(uiState.transportZiel)}")
+                                )
+                                navContext.startActivity(intent)
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Navigation,
+                                contentDescription = "Navigieren",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                if (showSuggestions && filteredSuggestions.isNotEmpty() &&
+                    filteredSuggestions.none { it.equals(uiState.transportZiel, ignoreCase = true) }
+                ) {
+                    Surface(
+                        tonalElevation = 2.dp,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            filteredSuggestions.forEach { suggestion ->
+                                TextButton(
+                                    onClick = {
+                                        viewModel.updateTransportZiel(suggestion)
+                                        showSuggestions = false
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = suggestion,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -1,6 +1,10 @@
 package com.mosait.ems.feature.export
 
+import android.content.ContentValues
 import android.content.Intent
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -83,8 +88,33 @@ fun ExportScreen(
                 Text("DOCX exportieren")
             }
 
-            // Share button
+            // Save to device & Share buttons
             if (uiState.exportedFilePath != null) {
+                OutlinedButton(
+                    onClick = {
+                        uiState.exportedFilePath?.let { file ->
+                            val resolver = context.contentResolver
+                            val contentValues = ContentValues().apply {
+                                put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+                                put(MediaStore.MediaColumns.MIME_TYPE, uiState.exportedMimeType)
+                                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                            }
+                            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                            if (uri != null) {
+                                resolver.openOutputStream(uri)?.use { outputStream ->
+                                    file.inputStream().use { it.copyTo(outputStream) }
+                                }
+                                Toast.makeText(context, "Gespeichert in Downloads/${file.name}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Auf Gerät speichern")
+                }
+
                 OutlinedButton(
                     onClick = {
                         uiState.exportedFilePath?.let { file ->

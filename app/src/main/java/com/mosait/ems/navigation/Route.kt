@@ -53,4 +53,7 @@ sealed interface Route {
 
     @Serializable
     data class Export(val missionId: Long) : Route
+
+    @Serializable
+    data object Settings : Route
 }

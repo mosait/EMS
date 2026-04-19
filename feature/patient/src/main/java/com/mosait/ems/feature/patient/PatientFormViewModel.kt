@@ -4,8 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mosait.ems.core.ui.util.DateTimeUtil
+import com.mosait.ems.core.data.repository.MissionRepository
 import com.mosait.ems.core.data.repository.PatientRepository
 import com.mosait.ems.core.model.Geschlecht
+import com.mosait.ems.core.model.MissionStatus
 import com.mosait.ems.core.model.Patient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,13 +27,31 @@ data class PatientFormUiState(
     val isSaving: Boolean = false,
     val savedPatientId: Long? = null,
     val isEditMode: Boolean = false,
-    val isLoading: Boolean = false
-)
+    val isLoading: Boolean = false,
+    val validationTriggered: Boolean = false
+) {
+    val nachnameError: Boolean get() = validationTriggered && nachname.isBlank()
+    val vornameError: Boolean get() = validationTriggered && vorname.isBlank()
+    val geburtsdatumError: Boolean get() = validationTriggered && (geburtsdatumText.isBlank() || DateTimeUtil.parseDateFromDigits(geburtsdatumText) == null)
+    val geburtsdatumErrorMessage: String? get() = when {
+        !validationTriggered -> null
+        geburtsdatumText.isBlank() -> "Pflichtfeld"
+        geburtsdatumText.length < 8 -> "Datum unvollständig"
+        DateTimeUtil.parseDateFromDigits(geburtsdatumText) == null -> "Ungültiges Datum"
+        else -> null
+    }
+    val krankenkasseError: Boolean get() = validationTriggered && krankenkasse.isBlank()
+    val versichertenNummerError: Boolean get() = validationTriggered && versichertenNummer.isBlank()
+    val isValid: Boolean get() = nachname.isNotBlank() && vorname.isNotBlank() &&
+        DateTimeUtil.parseDateFromDigits(geburtsdatumText) != null &&
+        krankenkasse.isNotBlank() && versichertenNummer.isNotBlank()
+}
 
 @HiltViewModel
 class PatientFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val patientRepository: PatientRepository
+    private val patientRepository: PatientRepository,
+    private val missionRepository: MissionRepository
 ) : ViewModel() {
 
     private val editPatientId: Long? = savedStateHandle.get<Long>("patientId")
@@ -58,7 +78,7 @@ class PatientFormViewModel @Inject constructor(
                         it.copy(
                             nachname = patient.nachname,
                             vorname = patient.vorname,
-                            geburtsdatumText = DateTimeUtil.formatDate(patient.geburtsdatum),
+                            geburtsdatumText = DateTimeUtil.formatDateToDigits(patient.geburtsdatum),
                             geschlecht = patient.geschlecht,
                             krankenkasse = patient.krankenkasse,
                             versichertenNummer = patient.versichertenNummer,
@@ -73,12 +93,17 @@ class PatientFormViewModel @Inject constructor(
 
     fun updateNachname(value: String) = _uiState.update { it.copy(nachname = value) }
     fun updateVorname(value: String) = _uiState.update { it.copy(vorname = value) }
-    fun updateGeburtsdatum(value: String) = _uiState.update { it.copy(geburtsdatumText = value) }
+    fun updateGeburtsdatum(value: String) {
+        val digits = value.filter { it.isDigit() }.take(8)
+        _uiState.update { it.copy(geburtsdatumText = digits) }
+    }
     fun updateGeschlecht(value: Geschlecht) = _uiState.update { it.copy(geschlecht = value) }
     fun updateKrankenkasse(value: String) = _uiState.update { it.copy(krankenkasse = value) }
     fun updateVersichertenNummer(value: String) = _uiState.update { it.copy(versichertenNummer = value) }
 
     fun savePatient(missionId: Long) {
+        _uiState.update { it.copy(validationTriggered = true) }
+        if (!_uiState.value.isValid) return
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             val state = _uiState.value
@@ -87,19 +112,24 @@ class PatientFormViewModel @Inject constructor(
                 val updated = existingPatient!!.copy(
                     nachname = state.nachname,
                     vorname = state.vorname,
-                    geburtsdatum = DateTimeUtil.parseDate(state.geburtsdatumText),
+                    geburtsdatum = DateTimeUtil.parseDateFromDigits(state.geburtsdatumText),
                     geschlecht = state.geschlecht,
                     krankenkasse = state.krankenkasse,
                     versichertenNummer = state.versichertenNummer
                 )
                 patientRepository.updatePatient(updated)
+                // Revert mission status if it was exported
+                val mission = missionRepository.getMissionByIdOnce(existingPatient!!.missionId)
+                if (mission != null && mission.status == MissionStatus.EXPORTED) {
+                    missionRepository.updateMission(mission.copy(status = MissionStatus.IN_PROGRESS))
+                }
                 _uiState.update { it.copy(isSaving = false, savedPatientId = updated.id) }
             } else {
                 val patient = Patient(
                     missionId = missionId,
                     nachname = state.nachname,
                     vorname = state.vorname,
-                    geburtsdatum = DateTimeUtil.parseDate(state.geburtsdatumText),
+                    geburtsdatum = DateTimeUtil.parseDateFromDigits(state.geburtsdatumText),
                     geschlecht = state.geschlecht,
                     krankenkasse = state.krankenkasse,
                     versichertenNummer = state.versichertenNummer

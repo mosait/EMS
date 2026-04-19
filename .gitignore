@@ -39,6 +39,7 @@ captures/
 # Keystore files
 *.jks
 *.keystore
+keystore.properties
 
 # External native build folder generated in Android Studio 2.2 and later
 .cxx/
@@ -66,6 +67,12 @@ lint/intermediates/
 lint/generated/
 lint/outputs/
 lint/tmp/
+
+# SVG files (not used by Android build)
+*.svg
+
+# Example files (copyrighted forms)
+example/
 
 # OS files
 .DS_Store

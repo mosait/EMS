@@ -13,8 +13,6 @@ import androidx.compose.ui.unit.dp
 import com.mosait.ems.core.ui.util.DateTimeUtil
 import com.mosait.ems.core.model.Mission
 import com.mosait.ems.core.model.MissionStatus
-import com.mosait.ems.core.ui.theme.StatusCompleted
-import com.mosait.ems.core.ui.theme.StatusDraft
 import com.mosait.ems.core.ui.theme.StatusExported
 import com.mosait.ems.core.ui.theme.StatusInProgress
 
@@ -26,9 +24,7 @@ fun MissionCard(
     onLongClick: () -> Unit = {}
 ) {
     val statusColor = when (mission.status) {
-        MissionStatus.DRAFT -> StatusDraft
         MissionStatus.IN_PROGRESS -> StatusInProgress
-        MissionStatus.COMPLETED -> StatusCompleted
         MissionStatus.EXPORTED -> StatusExported
     }
 
@@ -62,7 +58,7 @@ fun MissionCard(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "${mission.einsatzArt.name} • ${mission.rettungsMittel.name}",
+                    text = "${if (mission.einsatzArt == com.mosait.ems.core.model.EinsatzArt.SONSTIGES && mission.einsatzArtSonstiges.isNotBlank()) mission.einsatzArtSonstiges else mission.einsatzArt.name} • ${if (mission.rettungsMittel == com.mosait.ems.core.model.RettungsMittel.SONSTIGES && mission.rettungsMittelSonstiges.isNotBlank()) mission.rettungsMittelSonstiges else mission.rettungsMittel.name}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -74,21 +70,25 @@ fun MissionCard(
                     )
                 }
             }
-            Column(horizontalAlignment = Alignment.End) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = DateTimeUtil.formatDate(mission.einsatzDatum),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                SuggestionChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            text = mission.status.displayName,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                )
+                Surface(
+                    modifier = Modifier.widthIn(min = 80.dp),
+                    color = statusColor.copy(alpha = 0.15f),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = mission.status.displayName,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
         }
     }

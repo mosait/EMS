@@ -6,11 +6,15 @@ import com.mosait.ems.core.database.dao.InfectionProtocolDao
 import com.mosait.ems.core.database.dao.InitialAssessmentDao
 import com.mosait.ems.core.database.dao.InjuryDao
 import com.mosait.ems.core.database.dao.MeasuresDao
+import com.mosait.ems.core.database.dao.MissionDao
 import com.mosait.ems.core.database.dao.MissionResultDao
+import com.mosait.ems.core.database.dao.PatientDao
 import com.mosait.ems.core.database.dao.TransportRefusalDao
 import com.mosait.ems.core.database.dao.VitalSignDao
 import com.mosait.ems.core.database.mapper.toDomain
 import com.mosait.ems.core.database.mapper.toEntity
+import com.mosait.ems.core.model.MissionStatus
+import java.time.LocalDateTime
 import com.mosait.ems.core.model.Diagnosis
 import com.mosait.ems.core.model.InfectionProtocol
 import com.mosait.ems.core.model.InitialAssessment
@@ -33,8 +37,21 @@ class ProtocolRepositoryImpl @Inject constructor(
     private val measuresDao: MeasuresDao,
     private val missionResultDao: MissionResultDao,
     private val infectionProtocolDao: InfectionProtocolDao,
-    private val transportRefusalDao: TransportRefusalDao
+    private val transportRefusalDao: TransportRefusalDao,
+    private val patientDao: PatientDao,
+    private val missionDao: MissionDao
 ) : ProtocolRepository {
+
+    private suspend fun revertMissionIfExported(patientId: Long) {
+        val patient = patientDao.getPatientByIdOnce(patientId) ?: return
+        val mission = missionDao.getMissionByIdOnce(patient.missionId) ?: return
+        if (mission.status == MissionStatus.EXPORTED.name) {
+            missionDao.updateMission(mission.copy(
+                status = MissionStatus.IN_PROGRESS.name,
+                updatedAt = LocalDateTime.now()
+            ))
+        }
+    }
 
     // ---- Initial Assessment ----
 
@@ -47,6 +64,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = assessment.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(assessment.patientId)
         return initialAssessmentDao.insert(entity)
     }
 
@@ -61,6 +79,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = diagnosis.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(diagnosis.patientId)
         return diagnosisDao.insert(entity)
     }
 
@@ -75,6 +94,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = injury.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(injury.patientId)
         return injuryDao.insert(entity)
     }
 
@@ -87,10 +107,12 @@ class ProtocolRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addVitalSign(vitalSign: VitalSign): Long {
+        revertMissionIfExported(vitalSign.patientId)
         return vitalSignDao.insert(vitalSign.toEntity())
     }
 
     override suspend fun updateVitalSign(vitalSign: VitalSign) {
+        revertMissionIfExported(vitalSign.patientId)
         vitalSignDao.update(vitalSign.toEntity())
     }
 
@@ -109,6 +131,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = measures.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(measures.patientId)
         return measuresDao.insert(entity)
     }
 
@@ -123,6 +146,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = result.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(result.patientId)
         return missionResultDao.insert(entity)
     }
 
@@ -137,6 +161,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = protocol.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(protocol.patientId)
         return infectionProtocolDao.insert(entity)
     }
 
@@ -149,6 +174,7 @@ class ProtocolRepositoryImpl @Inject constructor(
         val entity = refusal.toEntity().let {
             if (existing != null) it.copy(id = existing.id) else it
         }
+        revertMissionIfExported(refusal.patientId)
         return transportRefusalDao.insert(entity)
     }
 }

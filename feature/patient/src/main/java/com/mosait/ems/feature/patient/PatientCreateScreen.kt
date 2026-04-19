@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,6 +18,7 @@ import com.mosait.ems.core.ui.components.EmsTextField
 import com.mosait.ems.core.ui.components.EmsTopAppBar
 import com.mosait.ems.core.ui.components.SectionHeader
 import com.mosait.ems.core.ui.components.UnsavedChangesDialog
+import com.mosait.ems.core.ui.util.DateVisualTransformation
 
 @Composable
 fun PatientCreateScreen(
@@ -76,17 +78,28 @@ fun PatientCreateScreen(
             EmsTextField(
                 value = uiState.nachname,
                 onValueChange = { viewModel.updateNachname(it) },
-                label = "Nachname"
+                label = "Nachname",
+                isRequired = true,
+                isError = uiState.nachnameError,
+                errorMessage = if (uiState.nachnameError) "Pflichtfeld" else null
             )
             EmsTextField(
                 value = uiState.vorname,
                 onValueChange = { viewModel.updateVorname(it) },
-                label = "Vorname"
+                label = "Vorname",
+                isRequired = true,
+                isError = uiState.vornameError,
+                errorMessage = if (uiState.vornameError) "Pflichtfeld" else null
             )
             EmsTextField(
                 value = uiState.geburtsdatumText,
                 onValueChange = { viewModel.updateGeburtsdatum(it) },
-                label = "Geburtsdatum (TT.MM.JJJJ)"
+                label = "Geburtsdatum (TT.MM.JJJJ)",
+                isRequired = true,
+                isError = uiState.geburtsdatumError,
+                errorMessage = uiState.geburtsdatumErrorMessage,
+                keyboardType = KeyboardType.Number,
+                visualTransformation = DateVisualTransformation()
             )
             EmsChipGroup(
                 items = Geschlecht.entries,
@@ -100,12 +113,18 @@ fun PatientCreateScreen(
             EmsTextField(
                 value = uiState.krankenkasse,
                 onValueChange = { viewModel.updateKrankenkasse(it) },
-                label = "Krankenkasse"
+                label = "Krankenkasse",
+                isRequired = true,
+                isError = uiState.krankenkasseError,
+                errorMessage = if (uiState.krankenkasseError) "Pflichtfeld" else null
             )
             EmsTextField(
                 value = uiState.versichertenNummer,
                 onValueChange = { viewModel.updateVersichertenNummer(it) },
-                label = "Versicherten-Nr."
+                label = "Versicherten-Nr.",
+                isRequired = true,
+                isError = uiState.versichertenNummerError,
+                errorMessage = if (uiState.versichertenNummerError) "Pflichtfeld" else null
             )
 
             Spacer(modifier = Modifier.height(16.dp))

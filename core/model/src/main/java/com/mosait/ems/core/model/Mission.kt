@@ -13,9 +13,11 @@ data class Mission(
     val einsatzDatum: LocalDate? = null,
     val einsatzNummer: String = "",
     val einsatzArt: EinsatzArt = EinsatzArt.NOTFALLEINSATZ,
+    val einsatzArtSonstiges: String = "",
 
     // Rettungsmittel
     val rettungsMittel: RettungsMittel = RettungsMittel.RTW,
+    val rettungsMittelSonstiges: String = "",
     val fahrzeugKennung: String = "",
     val funkKennung: String = "",
 

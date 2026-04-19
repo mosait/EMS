@@ -156,6 +156,20 @@ fun VitalsScreen(
 }
 
 @Composable
+private fun VitalValueRow(label: String, value: String, unit: String = "") {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = if (unit.isNotBlank()) "$value $unit" else value,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
 private fun VitalSignCard(
     vitalSign: VitalSign,
     onEdit: () -> Unit,
@@ -184,37 +198,45 @@ private fun VitalSignCard(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    vitalSign.rrSystolisch?.let { sys ->
-                        val dias = vitalSign.rrDiastolisch?.let { "/$it" } ?: ""
-                        Text("RR: $sys$dias mmHg", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    vitalSign.puls?.let {
-                        Text("Puls: $it /min", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    vitalSign.spO2?.let {
-                        Text("SpO₂: $it %", style = MaterialTheme.typography.bodyMedium)
-                    }
+
+            // Hämodynamik
+            val hasHaemo = vitalSign.rrSystolisch != null || vitalSign.puls != null || vitalSign.spO2 != null
+            if (hasHaemo) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text("Hämodynamik", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(2.dp))
+                vitalSign.rrSystolisch?.let { sys ->
+                    val dias = vitalSign.rrDiastolisch?.let { "/$it" } ?: ""
+                    VitalValueRow("Blutdruck", "$sys$dias", "mmHg")
                 }
-                Column(modifier = Modifier.weight(1f)) {
-                    vitalSign.atemfrequenz?.let {
-                        Text("AF: $it /min", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    vitalSign.blutzucker?.let {
-                        Text("BZ: $it mg/dl", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    vitalSign.gcs?.let {
-                        Text("GCS: $it", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
+                vitalSign.puls?.let { VitalValueRow("Puls", "$it", "/min") }
+                vitalSign.spO2?.let { VitalValueRow("SpO₂", "$it", "%") }
             }
+
+            // Atmung & Stoffwechsel
+            val hasAtmung = vitalSign.atemfrequenz != null || vitalSign.blutzucker != null || vitalSign.temperatur != null
+            if (hasAtmung) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text("Atmung & Stoffwechsel", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(2.dp))
+                vitalSign.atemfrequenz?.let { VitalValueRow("Atemfrequenz", "$it", "/min") }
+                vitalSign.blutzucker?.let { VitalValueRow("Blutzucker", "$it", "mg/dl") }
+                vitalSign.temperatur?.let { VitalValueRow("Temperatur", "$it", "°C") }
+            }
+
+            // Neurologie
+            val hasNeuro = vitalSign.gcs != null || vitalSign.schmerzSkala != null || vitalSign.ekg != null
+            if (hasNeuro) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text("Neurologie & Monitoring", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(2.dp))
+                vitalSign.gcs?.let { VitalValueRow("GCS", "$it") }
+                vitalSign.schmerzSkala?.let { VitalValueRow("Schmerz (NRS)", "$it") }
+                vitalSign.ekg?.let { VitalValueRow("EKG", it.name.replace("_", " ")) }
+            }
+
             if (vitalSign.bemerkung.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 Text(
                     text = vitalSign.bemerkung,
                     style = MaterialTheme.typography.bodySmall,
@@ -356,6 +378,94 @@ private data class VitalSeries(
     val values: List<Number?>
 )
 
+private data class VitalChartGroup(
+    val title: String,
+    val unit: String,
+    val series: List<VitalSeries>
+)
+
+@Composable
+private fun SingleGroupChart(
+    group: VitalChartGroup,
+    timeLabels: List<String>,
+    modifier: Modifier = Modifier
+) {
+    val activeSeries = group.series.filter { s -> s.values.any { it != null } }
+    if (activeSeries.isEmpty()) return
+
+    val modelProducer = remember(activeSeries) { CartesianChartModelProducer() }
+
+    LaunchedEffect(activeSeries) {
+        modelProducer.runTransaction {
+            lineSeries {
+                activeSeries.forEach { s ->
+                    series(s.values.map { v -> v?.toDouble() ?: 0.0 })
+                }
+            }
+        }
+    }
+
+    val bottomAxisValueFormatter = remember(timeLabels) {
+        CartesianValueFormatter { _, value, _ ->
+            timeLabels.getOrElse(value.toInt()) { "" }
+        }
+    }
+
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "${group.title} (${group.unit})",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            CartesianChartHost(
+                chart = rememberCartesianChart(
+                    rememberLineCartesianLayer(
+                        lineProvider = LineCartesianLayer.LineProvider.series(
+                            activeSeries.map { s ->
+                                LineCartesianLayer.Line(
+                                    fill = LineCartesianLayer.LineFill.single(fill(s.color))
+                                )
+                            }
+                        )
+                    ),
+                    startAxis = VerticalAxis.rememberStart(),
+                    bottomAxis = HorizontalAxis.rememberBottom(
+                        valueFormatter = bottomAxisValueFormatter
+                    ),
+                ),
+                modelProducer = modelProducer,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+            )
+
+            if (activeSeries.size > 1) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    activeSeries.forEach { s ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(10.dp),
+                                color = s.color,
+                                shape = MaterialTheme.shapes.extraSmall
+                            ) {}
+                            Text(s.label, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun VitalsChart(
     vitalSigns: List<VitalSign>,
@@ -363,91 +473,66 @@ private fun VitalsChart(
 ) {
     val sorted = remember(vitalSigns) { vitalSigns.sortedBy { it.timestamp } }
 
-    val allSeries = remember(sorted) {
-        listOf(
-            VitalSeries("RR sys", Color(0xFFE53935), sorted.map { it.rrSystolisch }),
-            VitalSeries("RR dia", Color(0xFFD81B60), sorted.map { it.rrDiastolisch }),
-            VitalSeries("Puls", Color(0xFF8E24AA), sorted.map { it.puls }),
-            VitalSeries("SpO₂", Color(0xFF1E88E5), sorted.map { it.spO2 }),
-            VitalSeries("AF", Color(0xFF43A047), sorted.map { it.atemfrequenz }),
-            VitalSeries("BZ", Color(0xFFFB8C00), sorted.map { it.blutzucker }),
-            VitalSeries("GCS", Color(0xFF00ACC1), sorted.map { it.gcs }),
-            VitalSeries("NRS", Color(0xFF6D4C41), sorted.map { it.schmerzSkala }),
-        ).filter { s -> s.values.any { it != null } }
-    }
-
-    if (allSeries.isEmpty()) return
-
-    val modelProducer = remember { CartesianChartModelProducer() }
-
-    LaunchedEffect(sorted) {
-        modelProducer.runTransaction {
-            lineSeries {
-                allSeries.forEach { s ->
-                    val yValues = s.values.map { v -> v?.toDouble() ?: 0.0 }
-                    series(yValues)
-                }
-            }
-        }
-    }
-
     val timeLabels = remember(sorted) {
         sorted.map { DateTimeUtil.formatTime(it.timestamp) }
     }
-    val bottomAxisValueFormatter = remember(timeLabels) {
-        CartesianValueFormatter { _, value, _ ->
-            timeLabels.getOrElse(value.toInt()) { "" }
-        }
+
+    val chartGroups = remember(sorted) {
+        listOf(
+            VitalChartGroup(
+                title = "Hämodynamik",
+                unit = "mmHg / /min",
+                series = listOf(
+                    VitalSeries("RR sys", Color(0xFFE53935), sorted.map { it.rrSystolisch }),
+                    VitalSeries("RR dia", Color(0xFFD81B60), sorted.map { it.rrDiastolisch }),
+                    VitalSeries("Puls", Color(0xFF8E24AA), sorted.map { it.puls }),
+                )
+            ),
+            VitalChartGroup(
+                title = "Oxygenierung",
+                unit = "%",
+                series = listOf(
+                    VitalSeries("SpO₂", Color(0xFF1E88E5), sorted.map { it.spO2 }),
+                )
+            ),
+            VitalChartGroup(
+                title = "Atmung",
+                unit = "/min",
+                series = listOf(
+                    VitalSeries("AF", Color(0xFF43A047), sorted.map { it.atemfrequenz }),
+                )
+            ),
+            VitalChartGroup(
+                title = "Stoffwechsel",
+                unit = "mg/dl / °C",
+                series = listOf(
+                    VitalSeries("BZ", Color(0xFFFB8C00), sorted.map { it.blutzucker }),
+                    VitalSeries("Temp", Color(0xFFFF7043), sorted.map { it.temperatur }),
+                )
+            ),
+            VitalChartGroup(
+                title = "Neurologie",
+                unit = "Punkte",
+                series = listOf(
+                    VitalSeries("GCS", Color(0xFF00ACC1), sorted.map { it.gcs }),
+                    VitalSeries("NRS", Color(0xFF6D4C41), sorted.map { it.schmerzSkala }),
+                )
+            ),
+        ).filter { group -> group.series.any { s -> s.values.any { it != null } } }
     }
 
-    Column(modifier = modifier.padding(16.dp)) {
-        CartesianChartHost(
-            chart = rememberCartesianChart(
-                rememberLineCartesianLayer(
-                    lineProvider = LineCartesianLayer.LineProvider.series(
-                        allSeries.map { s ->
-                            LineCartesianLayer.Line(
-                                fill = LineCartesianLayer.LineFill.single(fill(s.color))
-                            )
-                        }
-                    )
-                ),
-                startAxis = VerticalAxis.rememberStart(),
-                bottomAxis = HorizontalAxis.rememberBottom(
-                    valueFormatter = bottomAxisValueFormatter
-                ),
-            ),
-            modelProducer = modelProducer,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp),
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Legend
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            allSeries.forEach { s ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(12.dp),
-                        color = s.color,
-                        shape = MaterialTheme.shapes.extraSmall
-                    ) {}
-                    Text(
-                        text = s.label,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            }
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        chartGroups.forEach { group ->
+            SingleGroupChart(
+                group = group,
+                timeLabels = timeLabels
+            )
         }
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }

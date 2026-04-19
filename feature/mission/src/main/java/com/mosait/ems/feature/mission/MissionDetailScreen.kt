@@ -1,5 +1,7 @@
 package com.mosait.ems.feature.mission
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -11,10 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mosait.ems.core.model.EinsatzArt
 import com.mosait.ems.core.model.Patient
+import com.mosait.ems.core.model.RettungsMittel
 import com.mosait.ems.core.ui.util.DateTimeUtil
 import com.mosait.ems.core.ui.components.EmsTopAppBar
 import com.mosait.ems.core.ui.components.SectionHeader
@@ -126,8 +131,8 @@ fun MissionDetailScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("Einsatzinformationen", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Art: ${mission.einsatzArt.name}", style = MaterialTheme.typography.bodyMedium)
-                            Text("Mittel: ${mission.rettungsMittel.name}", style = MaterialTheme.typography.bodyMedium)
+                            Text("Art: ${if (mission.einsatzArt == EinsatzArt.SONSTIGES && mission.einsatzArtSonstiges.isNotBlank()) mission.einsatzArtSonstiges else mission.einsatzArt.name}", style = MaterialTheme.typography.bodyMedium)
+                            Text("Mittel: ${if (mission.rettungsMittel == RettungsMittel.SONSTIGES && mission.rettungsMittelSonstiges.isNotBlank()) mission.rettungsMittelSonstiges else mission.rettungsMittel.name}", style = MaterialTheme.typography.bodyMedium)
                             Text("Datum: ${DateTimeUtil.formatDate(mission.einsatzDatum)}", style = MaterialTheme.typography.bodyMedium)
                             if (mission.funkKennung.isNotBlank()) {
                                 Text("Funkkennung / Fahrzeugkennung: ${mission.funkKennung}", style = MaterialTheme.typography.bodyMedium)
@@ -139,7 +144,25 @@ fun MissionDetailScreen(
                                 Text("Ort: ${mission.einsatzOrtStrasse}, ${mission.einsatzOrtPlz} ${mission.einsatzOrtOrt}", style = MaterialTheme.typography.bodyMedium)
                             }
                             if (mission.transportZiel.isNotBlank()) {
-                                Text("Ziel: ${mission.transportZiel}", style = MaterialTheme.typography.bodyMedium)
+                                val detailContext = LocalContext.current
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Ziel: ${mission.transportZiel}", style = MaterialTheme.typography.bodyMedium)
+                                    IconButton(
+                                        onClick = {
+                                            val intent = Intent(
+                                                Intent.ACTION_VIEW,
+                                                Uri.parse("geo:0,0?q=${Uri.encode(mission.transportZiel)}")
+                                            )
+                                            detailContext.startActivity(intent)
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Navigation,
+                                            contentDescription = "Navigieren",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

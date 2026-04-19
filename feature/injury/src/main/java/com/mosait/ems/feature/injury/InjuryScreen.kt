@@ -76,28 +76,30 @@ fun InjuryScreen(
                     onSelectionChanged = { viewModel.updateSelectedRegions(it) },
                     labelSelector = { it.name.replace("_", " ") }
                 )
-            }
-
-            if (uiState.selectedRegions.isNotEmpty()) {
-                SectionHeader(title = "Schweregrad pro Region")
-                uiState.selectedRegions.forEach { region ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = region.name.replace("_", " "),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            InjurySeverity.entries.forEach { severity ->
-                                FilterChip(
-                                    selected = uiState.regionSeverities[region] == severity,
-                                    onClick = { viewModel.updateSeverityForRegion(region, severity) },
-                                    label = { Text(severity.name, style = MaterialTheme.typography.labelSmall) }
-                                )
+                // Inline severity selection for selected regions in this group
+                val selectedInGroup = regions.filter { it in uiState.selectedRegions }
+                if (selectedInGroup.isNotEmpty()) {
+                    selectedInGroup.forEach { region ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = region.name.replace("_", " "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                InjurySeverity.entries.forEach { severity ->
+                                    FilterChip(
+                                        selected = uiState.regionSeverities[region] == severity,
+                                        onClick = { viewModel.updateSeverityForRegion(region, severity) },
+                                        label = { Text(severity.name, style = MaterialTheme.typography.labelSmall) }
+                                    )
+                                }
                             }
                         }
                     }
