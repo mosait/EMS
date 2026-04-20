@@ -17,10 +17,13 @@ android {
         applicationId = "ems.aab"
         minSdk = 29
         targetSdk = 36
-        versionCode = 3
+        versionCode = 5
         versionName = "0.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            debugSymbolLevel = "FULL"
+        }
     }
 
     signingConfigs {
