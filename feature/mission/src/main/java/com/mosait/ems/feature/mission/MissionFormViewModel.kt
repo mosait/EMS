@@ -34,8 +34,30 @@ data class MissionFormUiState(
     val isSaving: Boolean = false,
     val savedMissionId: Long? = null,
     val isEditMode: Boolean = false,
-    val isLoading: Boolean = true
-)
+    val isLoading: Boolean = true,
+    val validationTriggered: Boolean = false
+) {
+    private val isNotfalleinsatz get() = einsatzArt == EinsatzArt.NOTFALLEINSATZ
+    private val isKrankentransport get() = einsatzArt == EinsatzArt.KRANKENTRANSPORT
+
+    val einsatzNummerError get() = validationTriggered && (isNotfalleinsatz || isKrankentransport) && einsatzNummer.isBlank()
+    val funkKennungError get() = validationTriggered && isNotfalleinsatz && funkKennung.isBlank()
+    val personalError get() = validationTriggered && isNotfalleinsatz && personal.isEmpty()
+    val einsatzOrtStrasseError get() = validationTriggered && isNotfalleinsatz && einsatzOrtStrasse.isBlank()
+    val einsatzOrtOrtError get() = validationTriggered && isNotfalleinsatz && einsatzOrtOrt.isBlank()
+    val transportZielError get() = validationTriggered && isKrankentransport && transportZiel.isBlank()
+
+    val isValid: Boolean get() {
+        if (isNotfalleinsatz) {
+            return einsatzNummer.isNotBlank() && funkKennung.isNotBlank() &&
+                personal.isNotEmpty() && einsatzOrtStrasse.isNotBlank() && einsatzOrtOrt.isNotBlank()
+        }
+        if (isKrankentransport) {
+            return einsatzNummer.isNotBlank() && transportZiel.isNotBlank()
+        }
+        return true
+    }
+}
 
 @HiltViewModel
 class MissionFormViewModel @Inject constructor(
@@ -119,6 +141,9 @@ class MissionFormViewModel @Inject constructor(
     }
 
     fun saveMission() {
+        _uiState.update { it.copy(validationTriggered = true) }
+        if (!_uiState.value.isValid) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             val state = _uiState.value

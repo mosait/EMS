@@ -43,7 +43,7 @@ fun DiagnosisScreen(
                 title = "Erkrankung",
                 onNavigateBack = handleBack,
                 actions = {
-                    TextButton(onClick = { viewModel.save(); onNavigateBack() }) {
+                    TextButton(onClick = { if (viewModel.save()) onNavigateBack() }) {
                         Text("Speichern")
                     }
                 }
@@ -63,6 +63,14 @@ fun DiagnosisScreen(
                     selected = uiState.keine,
                     onClick = { viewModel.toggleKeine() },
                     label = { Text("Keine Erkrankung") }
+                )
+            }
+
+            if (uiState.selectionError) {
+                Text(
+                    text = "Bitte mindestens eine Erkrankung auswählen oder Freitext eingeben, oder \"Keine Erkrankung\" aktivieren",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 

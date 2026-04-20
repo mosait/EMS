@@ -30,7 +30,7 @@ data class PersonalEntry(
 enum class PersonalRolle(val displayName: String) {
     NOTARZT("Notarzt"),
     NOTFALLSANITAETER("Notfallsanitäter"),
-    RETTUNGSASSISTENT("Rettungsassistent"),
+    RETTUNGSHELFER("Rettungshelfer"),
     RETTUNGSSANITAETER("Rettungssanitäter"),
     PRAKTIKANT("Praktikant"),
     SONSTIGES("Sonstiges")

@@ -481,17 +481,11 @@ private fun VitalsChart(
         listOf(
             VitalChartGroup(
                 title = "Hämodynamik",
-                unit = "mmHg / /min",
+                unit = "mmHg / /min / %",
                 series = listOf(
                     VitalSeries("RR sys", Color(0xFFE53935), sorted.map { it.rrSystolisch }),
                     VitalSeries("RR dia", Color(0xFFD81B60), sorted.map { it.rrDiastolisch }),
                     VitalSeries("Puls", Color(0xFF8E24AA), sorted.map { it.puls }),
-                )
-            ),
-            VitalChartGroup(
-                title = "Oxygenierung",
-                unit = "%",
-                series = listOf(
                     VitalSeries("SpO₂", Color(0xFF1E88E5), sorted.map { it.spO2 }),
                 )
             ),
@@ -508,14 +502,6 @@ private fun VitalsChart(
                 series = listOf(
                     VitalSeries("BZ", Color(0xFFFB8C00), sorted.map { it.blutzucker }),
                     VitalSeries("Temp", Color(0xFFFF7043), sorted.map { it.temperatur }),
-                )
-            ),
-            VitalChartGroup(
-                title = "Neurologie",
-                unit = "Punkte",
-                series = listOf(
-                    VitalSeries("GCS", Color(0xFF00ACC1), sorted.map { it.gcs }),
-                    VitalSeries("NRS", Color(0xFF6D4C41), sorted.map { it.schmerzSkala }),
                 )
             ),
         ).filter { group -> group.series.any { s -> s.values.any { it != null } } }

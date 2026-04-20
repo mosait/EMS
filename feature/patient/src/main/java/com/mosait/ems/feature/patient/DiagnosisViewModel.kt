@@ -18,8 +18,13 @@ data class DiagnosisUiState(
     val keine: Boolean = false,
     val selectedConditions: List<String> = emptyList(),
     val sonstigesTexte: Map<String, String> = emptyMap(),
-    val freitext: String = ""
-)
+    val freitext: String = "",
+    val validationTriggered: Boolean = false
+) {
+    val selectionError: Boolean get() = validationTriggered && !keine &&
+        selectedConditions.isEmpty() && freitext.isBlank()
+    val isValid: Boolean get() = keine || selectedConditions.isNotEmpty() || freitext.isNotBlank()
+}
 
 @HiltViewModel
 class DiagnosisViewModel @Inject constructor(
@@ -57,7 +62,10 @@ class DiagnosisViewModel @Inject constructor(
     }
     fun updateFreitext(value: String) = _uiState.update { it.copy(freitext = value) }
 
-    fun save() {
+    fun save(): Boolean {
+        _uiState.update { it.copy(validationTriggered = true) }
+        if (!_uiState.value.isValid) return false
+
         viewModelScope.launch {
             val state = _uiState.value
             protocolRepository.saveDiagnosis(
@@ -70,5 +78,6 @@ class DiagnosisViewModel @Inject constructor(
                 )
             )
         }
+        return true
     }
 }

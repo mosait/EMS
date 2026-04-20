@@ -68,7 +68,7 @@ fun InjuryScreen(
                             )
                         }
                     }
-                    TextButton(onClick = { viewModel.save(); onNavigateBack() }) {
+                    TextButton(onClick = { if (viewModel.save()) onNavigateBack() }) {
                         Text("Speichern")
                     }
                 }
@@ -96,6 +96,14 @@ fun InjuryScreen(
                 onClick = { viewModel.toggleKeine() },
                 label = { Text("Keine Verletzung") }
             )
+
+            if (uiState.selectionError) {
+                Text(
+                    text = "Bitte mindestens eine Verletzungsart oder Körperregion auswählen, oder \"Keine Verletzung\" aktivieren",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             SectionHeader(title = "Verletzungsart")
             EmsChipGroup(

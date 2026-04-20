@@ -23,9 +23,13 @@ data class InjuryUiState(
     val selectedTypes: List<InjuryType> = emptyList(),
     val regionSeverities: Map<BodyRegion, InjurySeverity> = emptyMap(),
     val kopfHalsFreitext: String = "",
-    val freitext: String = ""
+    val freitext: String = "",
+    val validationTriggered: Boolean = false
 ) {
     val selectedRegions: List<BodyRegion> get() = regionSeverities.keys.toList()
+    val selectionError: Boolean get() = validationTriggered && !keine &&
+        selectedTypes.isEmpty() && regionSeverities.isEmpty()
+    val isValid: Boolean get() = keine || selectedTypes.isNotEmpty() || regionSeverities.isNotEmpty()
 }
 
 @HiltViewModel
@@ -75,7 +79,10 @@ class InjuryViewModel @Inject constructor(
     fun updateFreitext(value: String) = _uiState.update { it.copy(freitext = value) }
     fun updateKopfHalsFreitext(value: String) = _uiState.update { it.copy(kopfHalsFreitext = value) }
 
-    fun save() {
+    fun save(): Boolean {
+        _uiState.update { it.copy(validationTriggered = true) }
+        if (!_uiState.value.isValid) return false
+
         viewModelScope.launch {
             val state = _uiState.value
             protocolRepository.saveInjury(
@@ -94,5 +101,6 @@ class InjuryViewModel @Inject constructor(
                 )
             )
         }
+        return true
     }
 }

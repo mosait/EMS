@@ -118,16 +118,30 @@ fun MissionCreateScreen(
             EmsTextField(
                 value = uiState.einsatzNummer,
                 onValueChange = { viewModel.updateEinsatzNummer(it) },
-                label = "Einsatznummer"
+                label = "Einsatznummer",
+                isRequired = uiState.einsatzArt == EinsatzArt.NOTFALLEINSATZ || uiState.einsatzArt == EinsatzArt.KRANKENTRANSPORT,
+                isError = uiState.einsatzNummerError,
+                errorMessage = if (uiState.einsatzNummerError) "Pflichtfeld" else null
             )
             EmsTextField(
                 value = uiState.funkKennung,
                 onValueChange = { viewModel.updateFunkKennung(it) },
-                label = "Funkkennung / Fahrzeugkennung"
+                label = "Funkkennung / Fahrzeugkennung",
+                isRequired = uiState.einsatzArt == EinsatzArt.NOTFALLEINSATZ,
+                isError = uiState.funkKennungError,
+                errorMessage = if (uiState.funkKennungError) "Pflichtfeld" else null
             )
 
             // Besatzung
             SectionHeader(title = "Besatzung")
+
+            if (uiState.personalError) {
+                Text(
+                    text = "Mindestens ein Besatzungsmitglied erforderlich",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             uiState.personal.forEachIndexed { index, entry ->
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
@@ -219,7 +233,10 @@ fun MissionCreateScreen(
             EmsTextField(
                 value = uiState.einsatzOrtStrasse,
                 onValueChange = { viewModel.updateEinsatzOrtStrasse(it) },
-                label = "Straße / Hausnummer"
+                label = "Straße / Hausnummer",
+                isRequired = uiState.einsatzArt == EinsatzArt.NOTFALLEINSATZ,
+                isError = uiState.einsatzOrtStrasseError,
+                errorMessage = if (uiState.einsatzOrtStrasseError) "Pflichtfeld" else null
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 EmsTextField(
@@ -232,7 +249,10 @@ fun MissionCreateScreen(
                     value = uiState.einsatzOrtOrt,
                     onValueChange = { viewModel.updateEinsatzOrtOrt(it) },
                     label = "Ort",
-                    modifier = Modifier.weight(2f)
+                    modifier = Modifier.weight(2f),
+                    isRequired = uiState.einsatzArt == EinsatzArt.NOTFALLEINSATZ,
+                    isError = uiState.einsatzOrtOrtError,
+                    errorMessage = if (uiState.einsatzOrtOrtError) "Pflichtfeld" else null
                 )
             }
 
@@ -289,7 +309,10 @@ fun MissionCreateScreen(
                             showSuggestions = true
                         },
                         label = "Krankenhaus / Ziel",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        isRequired = uiState.einsatzArt == EinsatzArt.KRANKENTRANSPORT,
+                        isError = uiState.transportZielError,
+                        errorMessage = if (uiState.transportZielError) "Pflichtfeld" else null
                     )
                     if (uiState.transportZiel.isNotBlank()) {
                         IconButton(

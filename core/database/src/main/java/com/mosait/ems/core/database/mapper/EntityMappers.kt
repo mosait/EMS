@@ -91,7 +91,10 @@ private fun parsePersonalJson(json: String): List<PersonalEntry> {
             val obj = array.getJSONObject(i)
             PersonalEntry(
                 name = obj.optString("name", ""),
-                rolle = PersonalRolle.valueOf(obj.optString("rolle", "RETTUNGSSANITAETER"))
+                rolle = obj.optString("rolle", "RETTUNGSSANITAETER").let { rolleStr ->
+                    if (rolleStr == "RETTUNGSASSISTENT") PersonalRolle.RETTUNGSHELFER
+                    else PersonalRolle.valueOf(rolleStr)
+                }
             )
         }
     } catch (_: Exception) {
