@@ -3,17 +3,23 @@ package com.mosait.ems.feature.mission
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,7 +34,7 @@ import com.mosait.ems.core.ui.components.SectionHeader
 import com.mosait.ems.core.ui.components.EmsChipGroup
 import com.mosait.ems.core.ui.components.UnsavedChangesDialog
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MissionCreateScreen(
     onNavigateBack: () -> Unit,
@@ -78,6 +84,7 @@ fun MissionCreateScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -263,23 +270,23 @@ fun MissionCreateScreen(
                 // Rems-Murr-Kreis
                 "Rems-Murr-Klinikum Winnenden",
                 "Rems-Murr-Klinik Schorndorf",
-                "Klinik Erbach (Privatambulanz)",
+                "Klinik Erbach (Privatambulanz Weinstadt)",
                 // Stuttgart
                 "Klinikum Stuttgart – Katharinenhospital",
                 "Klinikum Stuttgart – Bürgerhospital",
                 "Klinikum Stuttgart – Olgahospital / Frauenklinik",
-                "Robert-Bosch-Krankenhaus",
-                "Robert-Bosch-Krankenhaus Standort 2 (City)",
+                "Robert-Bosch-Krankenhaus (Stuttgart)",
+                "Robert-Bosch-Krankenhaus Standort 2 – City (Stuttgart)",
                 "Diakonie-Klinikum Stuttgart",
                 "Marienhospital Stuttgart",
-                "Karl-Olga-Krankenhaus",
-                "Krankenhaus Bad Cannstatt (KBC)",
+                "Karl-Olga-Krankenhaus (Stuttgart)",
+                "Krankenhaus Bad Cannstatt Stuttgart (KBC)",
                 "Bethesda Krankenhaus Stuttgart",
-                "Evangelisches Krankenhaus Bad Cannstatt",
-                "Klinik Schillerhöhe (Robert Bosch)",
-                "St. Anna Klinik",
+                "Evangelisches Krankenhaus Bad Cannstatt Stuttgart",
+                "Klinik Schillerhöhe (Robert Bosch - Gerlingen)",
+                "St. Anna Klinik (Stuttgart)",
                 "Sana Klinik Stuttgart",
-                "Filderklinik",
+                "Filderklinik (Filderstadt)",
                 "Kreiskliniken Esslingen – Standort Esslingen",
                 "Kreiskliniken Esslingen – Standort Nürtingen",
                 "Kreiskliniken Esslingen – Standort Kirchheim",
@@ -287,17 +294,33 @@ fun MissionCreateScreen(
                 "Klinik Bietigheim",
             )
             val filteredSuggestions = remember(uiState.transportZiel) {
-                if (uiState.transportZiel.length >= 2) {
+                if (uiState.transportZiel.isBlank()) {
+                    hospitalSuggestions
+                } else {
                     hospitalSuggestions.filter {
                         it.contains(uiState.transportZiel, ignoreCase = true)
                     }
-                } else emptyList()
+                }
             }
-            var showSuggestions by remember { mutableStateOf(true) }
+            var showSuggestions by remember { mutableStateOf(false) }
+            val bringIntoViewRequester = remember { BringIntoViewRequester() }
+
+            LaunchedEffect(showSuggestions, filteredSuggestions.size) {
+                if (showSuggestions && filteredSuggestions.isNotEmpty()) {
+                    bringIntoViewRequester.bringIntoView()
+                }
+            }
 
             val navContext = LocalContext.current
 
-            Column {
+            Column(
+                modifier = Modifier
+                    .bringIntoViewRequester(bringIntoViewRequester)
+                    .onFocusChanged { focusState ->
+                        if (focusState.hasFocus) showSuggestions = true
+                        else showSuggestions = false
+                    }
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -340,21 +363,39 @@ fun MissionCreateScreen(
                         shape = MaterialTheme.shapes.small,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column {
-                            filteredSuggestions.forEach { suggestion ->
-                                TextButton(
-                                    onClick = {
-                                        viewModel.updateTransportZiel(suggestion)
-                                        showSuggestions = false
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = suggestion,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                        val suggestionsScrollState = rememberScrollState()
+                        val isScrolledToBottom = suggestionsScrollState.value >= suggestionsScrollState.maxValue
+                        Box {
+                            Column(
+                                modifier = Modifier
+                                    .heightIn(max = 192.dp)
+                                    .verticalScroll(suggestionsScrollState)
+                            ) {
+                                filteredSuggestions.forEach { suggestion ->
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.updateTransportZiel(suggestion)
+                                            showSuggestions = false
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = suggestion,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
                                 }
+                            }
+                            if (filteredSuggestions.size > 4 && !isScrolledToBottom) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = Color(0xFF212121),
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .size(20.dp)
+                                )
                             }
                         }
                     }
