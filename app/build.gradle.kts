@@ -17,8 +17,8 @@ android {
         applicationId = "ems.aab"
         minSdk = 29
         targetSdk = 36
-        versionCode = 11
-        versionName = "0.1.8"
+        versionCode = 14
+        versionName = "0.1.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {

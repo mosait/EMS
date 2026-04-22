@@ -19,9 +19,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mosait.ems.core.model.EinsatzArt
@@ -307,6 +311,7 @@ fun MissionCreateScreen(
 
             LaunchedEffect(showSuggestions, filteredSuggestions.size) {
                 if (showSuggestions && filteredSuggestions.isNotEmpty()) {
+                    delay(310)
                     bringIntoViewRequester.bringIntoView()
                 }
             }
@@ -315,7 +320,6 @@ fun MissionCreateScreen(
 
             Column(
                 modifier = Modifier
-                    .bringIntoViewRequester(bringIntoViewRequester)
                     .onFocusChanged { focusState ->
                         if (focusState.hasFocus) showSuggestions = true
                         else showSuggestions = false
@@ -361,14 +365,26 @@ fun MissionCreateScreen(
                     Surface(
                         tonalElevation = 2.dp,
                         shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .bringIntoViewRequester(bringIntoViewRequester)
                     ) {
                         val suggestionsScrollState = rememberScrollState()
                         val isScrolledToBottom = suggestionsScrollState.value >= suggestionsScrollState.maxValue
+                        val consumeScroll = remember {
+                            object : NestedScrollConnection {
+                                override fun onPostScroll(
+                                    consumed: Offset,
+                                    available: Offset,
+                                    source: NestedScrollSource
+                                ): Offset = available
+                            }
+                        }
                         Box {
                             Column(
                                 modifier = Modifier
                                     .heightIn(max = 192.dp)
+                                    .nestedScroll(consumeScroll)
                                     .verticalScroll(suggestionsScrollState)
                             ) {
                                 filteredSuggestions.forEach { suggestion ->
@@ -391,7 +407,7 @@ fun MissionCreateScreen(
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = null,
-                                    tint = Color(0xFF212121),
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier
                                         .align(Alignment.BottomCenter)
                                         .size(20.dp)
